@@ -1,0 +1,49 @@
+3.3 Observe the results in Tensorboard
+
+a) Most pixels in the prelabelled images are not labelled as part of the road. What this means is that one could simply guess that every single pixel is not depicting a road, and a quite high accuracy could be obtained this way. In the predicted images y_pred, most pixels aren't predicted to be part of the road either, even if they should have been. This is particularly prominent when looking at the very first epoch of many of the samples in Tensorboard, where very few pixels were classified as road in epoch 1, and more pixels were classified as such later on.
+
+b) According to the loss and accuracy graphs, both actually improved (the first dropped and the latter increased) rather rapidly in the first few epochs before flattening out near the last ones. When looking at the sample pictures, it seems too that the model was very quick (used very few epochs in most cases) to identify the roads correctly, which would mean that the accuracy in fact kept up with the pace of the loss reduction, as the graphs also suggest.
+
+However, disregarding the results from this model, I would assume that a possible way that the accuracy increase would lag behind the loss reduction could be due to how accuracy is measured compared to loss. With loss, every incremental change in the probability of a pixel being classified as road or not contributes to loss increasing or decreasing. Because of how gradient descent works, this means that loss generally should decrease at every epoch.
+
+When measuring accuracy, we do not care about minor changes to the probabilities; we only regard whether they are above or below 0.5. This means that to increase accuracy, we have to wait as many epochs as it takes for unclassified road pixels to go above 0.5, or for wrongly classified non-road pixels to go below 0.5. Thus, accuracy would lag behind loss reduction, especially if the learning rate is low, as this decides how incremental changes to the parameters are.
+
+3.4 Epochs and train steps
+
+a) From the code, we can see that a training step is performed for each image batch in the training data. The batch size for training data is set to 4. From the prewritten code, we see that the first 272 images are split into training data, the others to validation data. We then get 272/4 = 68 image batches. Thus, presuming that we count a step as a forward and backward pass as in the train_step function, there are 68 steps performed per epoch.
+
+b) To find this, we simply multiply the result from a) with the number of epochs. The latter is set to 12, so we have a total of 68*12 = 816 steps.
+
+3.5 Metrics
+
+a) As described in 3.3a), this very image classification task is an example of such a case. This is simply because most pixels aren't road pixels in most pictures, so if one guesses that none of the pixels are road pixels, it may be possible to get a decent accuracy. A more obvious example of the same phenomenon may be if a model was made to classify which people in a population had some very rare disease. Most people won't have the disease anyway, so the model will be very accurate if it predicted that no one had it. However, such a result could be catastrophic if we relied on the model to discover who actually has the disease in order to help them.
+
+b) As mentioned in the task text, precision and recall would probably be more natural measures of the model doing what it's supposed to do than accuracy, due to the reasons discussed above. Precision would tell us how many of the positively classified pixels (the ones classified as "road") are in fact road pixels. If precision is low when we classify many pixels positively, it could signify that the model is a bit too quick to classify pixels positively. Recall, on the other hand, could tell us how many of the actual road pixels are being classified, and may be more relevant to this setting. If accuracy is high, but recall is low, this likely means that there are rather few true a priori positive pixels, and that a high accuracy has been achieved by the model simply classifying very few pixels as positives.
+
+3.6 Implement U-net
+
+a) Transposed convolution, or deconvolution, is similar to convolution, but it is typically performed from the output of convolution to the input, instead of the other way around. In normal convolution, one would take a filter spanning over an array of values, and calculate some weighted sum of them based on the filter's parameters, returning only a single value. The filter would then be moved across the array to produce a new array of weighted sums as specified by the filters. If padding isn't used, this generally results in an output array of shorter length than the input, but with the same dimensions.
+
+In transposed convolution, one would instead go through each element in the array and multiply the value it holds with a filter (e.g., the same one used in normal convolution). Then, if the filter is an array holding more than one value (like a 3x3 filter array), multiple values are produced, all of which are weighted by the filter's values. As this is performed for each element in the array, multiple new elements are produced. These can then be placed back in an output array which would get the same dimension as an input array in normal convolution.
+
+b) Total params: 529457
+
+c) Given that we use one and the same input, we should get the same output regardless of whether this is done during training or testing (given that the model parameters aren't changed). Our model does not contain any stochastic elements like Dropout, and should thus perform exactly the same operations and get the same results during one forward pass every time the same input is given.
+
+d) For more than two classes, it would be natural to swap the sigmoid for the softmax function, as this naturally converts values for each class into probabilities that will sum up to 1 (given that we only want to classify the pixel as belonging to 1 class). In the case of 2 classes, only 1 channel is required because if a pixel is not classified as belonging to the positive class (road), it is automatically assigned to the other (not road). With more than 2 classes, we would have to add a channel per possible class in order to hold class probabilities per pixel, per class. So for 4 classes, we would then have 4 channels.
+
+e) When we perform pooling operations in a segmentation model, information is lost from the previous layer. By storing the layers before pooling, we can later stack them together with the results from transposed convolution (as in the Unet layout). This can contribute to adding back previously "discarded" information during pooling, making for a more precise model.
+
+f) For image classification instead of segmentation, we want to label the image as a whole, not every pixel within it. Then, it would be natural to replace the devonvolution part of the model with fully connected layers, and have output probabilities per class, per image, instead of per class, per pixel. The loss function could still be CE loss as it is appropriate for classification problems, but it would only add to the loss when the image is wrongly classified, not accumulating loss per pixel as in segmentation.
+
+g) In this case, the task becomes a regression problem rather than a classification problem, where we ultimately want all values at each pixel (e.g., RGB values) in the input image to be transformed to as close to the corresponding pixel in some reference picture as possible. Then, it would be natural to use some variant of MSE to calculate the loss.
+
+h) The model was more accurate according to the numbers. Looking at some samples, it also seems to be able to correctly classify more of the roads, disregarding noise in them such as arrows and lines on the road which would often be left classifed as non-road pixels by the simple model. It is also more able to disregard noise in true non-road pixels, such as strips of air that the simple model would occasionally mistake for road, perhaps due to similar shapes.
+
+
+
+
+
+
+
+
