@@ -12,11 +12,11 @@ def experiment_1():
     # Initializing agent R1 at random position
     r1 = Agent()
 
-    result_per_epoch = []
+    results_per_epoch = []
 
     # Starting simulation
-    completed_tasks = 0
     for i in range(NUM_RUNS):
+        completed_tasks = 0
         for j in range(NUM_EPOCHS):
             # Updating movement (velocity and position) of agent
             r1.update_velocity_random(AGENT_ABSOLUTE_VELOCITY)
@@ -27,12 +27,13 @@ def experiment_1():
             if distance_euclid(task.pos, r1.pos) < task.task_radius:
                 completed_tasks += 1
                 task = Task(task_capacity=1, task_radius=50)
-                result_per_epoch.append(1)
-            else:
-                result_per_epoch.append(0)
-    print(f"Tasks solved per epoch: {completed_tasks / NUM_EPOCHS}")
+        results_per_epoch.append(completed_tasks)
     
+    # Plotting results
     x = np.linspace(1, NUM_RUNS, NUM_RUNS)
+    y = results_per_epoch
+    plt.plot(x, y)
+    plt.show()
 
 
 def experiment_2():
