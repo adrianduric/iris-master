@@ -1,5 +1,6 @@
 from utils import *
 from constants import *
+from agent import *
 import numpy as np
 
 class Task:
@@ -15,3 +16,16 @@ class Task:
         self.pos = np.array([x, y])
         self.task_capacity = task_capacity
         self.task_radius = task_radius
+
+    def sufficient_agents_in_radius(self, agents: list):
+        num_agents_in_radius = 0
+        for agent in agents:        
+            # Checking if the agent is within the task radius, adding to
+            # num_agents_in_radius
+            if distance_euclid(self.pos, agent.pos) < self.task_radius:
+                num_agents_in_radius += 1
+
+            # Checking if enough rgents are close enough to task to complete it
+            if num_agents_in_radius >= self.task_capacity:
+                return True          
+        return False
