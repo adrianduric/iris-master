@@ -21,30 +21,6 @@ class Agent:
         self.target_pos = None
         self.inside_task_radius = False
 
-    def is_in_task_radius(self, tasks: list):
-        """
-        Checks if agent is within radius of any of the given tasks. If so, sets the
-        inside_task_radius flag to True and returns True. Else, returns False and sets
-        the flag to False.
-        """
-        self.inside_task_radius = False
-        for task in tasks:
-            if distance_euclid(self.pos, task.pos) < task.task_radius:
-                self.inside_task_radius = True
-                return True
-        return False
-
-    def has_reached_target(self):
-        """
-        Checks if agent is within distance=abs_velocity of target_pos. If so, returns flag True.
-        Else, returns False.
-        """
-
-        abs_distance = distance_euclid(self.pos, self.target_pos)
-        if abs_distance >= self.abs_velocity:
-            return True
-        return False
-
     def update_pos(self):
         """
         Updates the current position of the agent by adding the self.velocity vector to the
@@ -59,10 +35,14 @@ class Agent:
         self.pos = np.minimum(self.pos, 1000)
         self.pos = np.maximum(self.pos, 0)
 
-    def update_velocity(self, tasks):
+    def update_velocity(self):
         """
-        If target_pos is specified (not None) and the agent is not within abs_velocity range of it,
-        and the agent is not already within any task radius, sets agent velocity towards that position.
+        Updates velocity of agent according to following conditions:
+
+        If it has reached a task (is inside task radius), it stops moving.
+
+        If target_pos is specified (not None) and the agent has not reached it, sets agent velocity
+        towards that position.
 
         Otherwise, makes the agent's movement random by changing the velocity in each direction
         to some random number. Components vx and vy are set so that the absolute velocity sums up to
@@ -70,15 +50,16 @@ class Agent:
         """
 
         # Removes target_pos (should it be set) if agent is inside any task radius
-        if self.is_in_task_radius(tasks):
+        if self.inside_task_radius:
             self.target_pos = None
+            self.velocity = np.zeros((2))
+            return
 
-        # Goes towards target_pos if specified and absolute distance between pos and target_pos
-        # is less than abs_velocity
-        if self.target_pos is not None and not self.has_reached_target():
+        # Goes towards target_pos if specified and is not (almost) equal to pos
+        if self.target_pos is not None and not np.allclose(self.pos, self.target_pos):
             self.velocity = self.target_pos - self.pos
             norm = np.linalg.norm(self.velocity)
-            self.velocity = (self.velocity / norm) * self.abs_velocity
+            self.velocity = (self.velocity / norm) * np.minimum(self.abs_velocity, norm)
             return
         
         # If not, removes target_pos and initializes random movement
@@ -107,18 +88,39 @@ class Agent:
         position of the agent emitting the signal.
 
         The called upon agents will then go towards the coordinate from which the signal was emitted until:
-        a) they reach the signal location +/- abs_velocity (to prevent overshooting and agents
-        getting stuck).
+        a) they reach the signal location.
         b) they find themselves within a task radius themselves.
         The above conditions are checked for each agent when their velocities are updated.
         """
 
-        # Checking whether the agent is within any task radius
-        if self.inside_task_radius:
-            # If so, send a signal to any agent within comm_dist
-            for agent in agents:        
-                # Checking if the agent is within the comm_dist
-                if distance_euclid(self.pos, agent.pos) < self.comm_dist:
-                    agent.target_pos = self.pos
+        # Send a signal to any agent within comm_dist
+        for agent in agents:  
+            # Skips itself
+            if agent == self:
+                continue
+
+            # Checking if the agent is within the comm_dist or is already within a task radius
+            # (an agent which as already detected a nearby task will itself send out a signal,
+            # and presumably would then be more interested in its own discovered task than the
+            # signal of another agent)
+            if (not agent.inside_task_radius) and distance_euclid(self.pos, agent.pos) < self.comm_dist:
+                agent.target_pos = self.pos
+
+    def calloff(self, agents: list):
+        """
+        Performs the "opposite" action of callout: instead of giving agents within comm_dist a target_pos,
+        this function removes their target_pos if their previous target_pos was this agent's current pos.
+
+        This method is called from the task when it checks whether it should be completed.
+        """
+
+        # Send a signal to any agent within comm_dist
+        for agent in agents:  
+            # Skips itself
+            if agent == self or agent.target_pos is None:
+                continue
+
+            if np.allclose(self.pos, agent.target_pos) and distance_euclid(self.pos, agent.pos) < self.comm_dist:
+                agent.target_pos = None
                         
 

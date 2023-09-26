@@ -5,6 +5,7 @@ from task import *
 import numpy as np
 import matplotlib.pyplot as plt
 
+
 def experiment_1():
     # Initializing task T at random position
     task = Task(task_capacity=1, task_radius=50)
@@ -18,7 +19,7 @@ def experiment_1():
         completed_tasks = 0
         for _ in range(NUM_EPOCHS):
             # Updating movement (velocity and position) of agent
-            r1.update_velocity([task])
+            r1.update_velocity()
             r1.update_pos()
             
             # Checking if the agent is within the task radius, adding to
@@ -32,7 +33,7 @@ def experiment_1():
     x = np.linspace(1, NUM_EPISODES, NUM_EPISODES)
     y = results_per_episode
     plt.plot(x, y, 'o')
-    plt.title("Number of tasks solved per run")
+    plt.title("TASK A)")
     plt.xlabel("Run #")
     plt.ylabel("# of tasks solved")
     plt.show()
@@ -56,7 +57,7 @@ def experiment_2():
         for _ in range(NUM_EPOCHS):
             # Updating movement (velocity and position) of agent
             for agent in agents:
-                agent.update_velocity([task])
+                agent.update_velocity()
                 agent.update_pos()
             
                 # Checking if the agent is within the task radius, adding to
@@ -70,7 +71,7 @@ def experiment_2():
     x = NUM_AGENTS
     y = results_per_agent_num
     plt.plot(x, y, 'o')
-    plt.title("Number of tasks solved vs. number of agents")
+    plt.title("TASK B)")
     plt.xlabel("# of agents")
     plt.ylabel("# of tasks solved")
     plt.show()
@@ -95,7 +96,7 @@ def experiment_3():
         for _ in range(NUM_EPOCHS):
             # Updating movement (velocity and position) of agent
             for agent in agents:
-                agent.update_velocity(tasks)
+                agent.update_velocity()
                 agent.update_pos()
             
             for task_i in range(len(tasks)):
@@ -110,24 +111,29 @@ def experiment_3():
     x = NUM_AGENTS
     y = results_per_agent_num
     plt.plot(x, y, 'o')
-    plt.title("Number of tasks solved vs. number of agents")
+    plt.title("TASK C)")
     plt.xlabel("# of agents")
     plt.ylabel("# of tasks solved")
     plt.show()
 
 def experiment_4():
-    # Performing experiment with different numbers of tasks
-    tasks = []
-    results_per_task_num = []
-    for _ in NUM_TASKS:
-        task = Task(task_capacity=3, task_radius=50)
-        tasks.append(task)
-        
-        # Performing experiment with different numbers of agents
-        for agent_num in NUM_AGENTS:
+
+    # Storing results across all episodes, per task_num
+    results = {}
+    for task_num in NUM_TASKS:
+        results[task_num] = []
+
+    for i in range(NUM_EPISODES):
+        # Performing experiment with different numbers of tasks
+        tasks = []
+        for task_num in NUM_TASKS:
+            for _ in range(task_num):      
+                task = Task(task_capacity=3, task_radius=50)
+                tasks.append(task)
+            
             # Initializing agents at random positions
             agents = []
-            for _ in range(agent_num):
+            for _ in range(30): # For purpose of experiment, assuming R=30 agents
                 agent = Agent()
                 agents.append(agent)
 
@@ -136,7 +142,7 @@ def experiment_4():
             for _ in range(NUM_EPOCHS):
                 # Updating movement (velocity and position) of agent
                 for agent in agents:
-                    agent.update_velocity(tasks)
+                    agent.update_velocity()
                     agent.update_pos()
                 
                 for task_i in range(len(tasks)):
@@ -145,124 +151,156 @@ def experiment_4():
                     if task_completed:
                         completed_tasks += 1
                         tasks[task_i] = Task(task_capacity=3, task_radius=50)
-        results_per_task_num.append(completed_tasks)
-    
-    # Plotting results    
-    x = NUM_TASKS
-    y = results_per_task_num
-    plt.plot(x, y, 'o')
-    plt.title("Number of tasks solved vs. number of tasks")
+            results[task_num].append(completed_tasks)
+        print(f"Episode {i + 1} complete.")
+
+    # Plotting results
+    median_results = {x: np.median(results[x]) for x in NUM_TASKS}
+    average_results = {x: np.mean(results[x]) for x in NUM_TASKS}
+
+    for x in NUM_TASKS:
+        x_offsets = np.random.uniform(-0.5, 0.5, len(results[x]))  # Random offsets
+        plt.scatter([x + offset for offset in x_offsets], results[x], color='blue')
+
+    plt.plot(NUM_TASKS, [median_results[x] for x in NUM_TASKS], color='red', label='Median # tasks completed', marker='o')
+    plt.plot(NUM_TASKS, [average_results[x] for x in NUM_TASKS], color='green', label='Average # tasks completed', marker='o')
+
+    plt.title("TASK D)")
     plt.xlabel("# of tasks")
     plt.ylabel("# of tasks solved")
     plt.show()
 
 def experiment_5():
-    # Performing experiment with different numbers of tasks
-    tasks = []
-    results_per_task_num = []
-    for task_num in NUM_TASKS:
-        task = Task(task_capacity=3, task_radius=50)
-        tasks.append(task)
-        
-        # Performing experiment with different numbers of agents
-        for agent_num in NUM_AGENTS:
+    # Storing results across all episodes, per comm_dist
+    results = {}
+    for comm_dist in COMM_DISTANCES:
+        results[comm_dist] = []
+
+    for i in range(NUM_EPISODES):
+        # Performing experiment with different communication distances
+        for comm_dist in COMM_DISTANCES:   
+            # Initializing tasks at random positions
+            tasks = []
+            for _ in range(2): # Assuming T=2 tasks
+                task = Task(task_capacity=3, task_radius=50)
+                tasks.append(task)
+
             # Initializing agents at random positions
             agents = []
-            for agent_i in range(agent_num):
-                agent = Agent()
+            for _ in range(30): # Assuming R=30 agents
+                agent = Agent(comm_dist=comm_dist)
                 agents.append(agent)
 
             # Starting simulation
             completed_tasks = 0
-            for i in range(NUM_EPOCHS):
-                # Updating movement (velocity and position) of agent
-                for agent in agents:
-                    # Callout is performed before updating velocities, so that each
-                    # agent can evaluate whether conditions are met for it to follow
-                    # the target_pos it may receive from callout.
-                    agent.callout(agents)
-                    agent.update_velocity(tasks)
-                    agent.update_pos()
-                
+            for _ in range(NUM_EPOCHS):
                 for task_i in range(len(tasks)):
                     task = tasks[task_i]
                     task_completed = task.sufficient_agents_in_radius(agents)
                     if task_completed:
                         completed_tasks += 1
                         tasks[task_i] = Task(task_capacity=3, task_radius=50)
-        results_per_task_num.append(completed_tasks)
 
+                # Updating movement (velocity and position) of agent
+                for agent in agents:
+                    # Callout is performed before updating velocities, so that each
+                    # agent can evaluate whether conditions are met for it to follow
+                    # the target_pos it may receive from callout.
+                    if agent.inside_task_radius:
+                        agent.callout(agents)
+                    agent.update_velocity()
+                    agent.update_pos()
+            results[comm_dist].append(completed_tasks)
+        print(f"Episode {i + 1} complete.")
 
-def experiment(
-        num_episodes: int,
-        num_tasks: list,
-        task_capacity: int,
-        task_radius: float,
-        num_agents: list,
-        comm_distances: list,
-        num_epochs: int
-    ):
+    # Plotting results
+    median_results = {x: np.median(results[x]) for x in COMM_DISTANCES}
+    average_results = {x: np.mean(results[x]) for x in COMM_DISTANCES}
 
-    results_per_episode = []
-    for i in range(num_episodes):
-  
-        # Performing experiment with different numbers of tasks
-        results_per_task_num = []
-        tasks = []
-        for task_num in num_tasks:
+    for x in COMM_DISTANCES:
+        x_offsets = np.random.uniform(-20, 20, len(results[x]))  # Random offsets
+        plt.scatter([x + offset for offset in x_offsets], results[x], color='blue')
+
+    plt.plot(COMM_DISTANCES, [median_results[x] for x in COMM_DISTANCES], color='red', label='Median # tasks completed', marker='o')
+    plt.plot(COMM_DISTANCES, [average_results[x] for x in COMM_DISTANCES], color='green', label='Average # tasks completed', marker='o')
+
+    plt.title("TASK E)")
+    plt.xlabel("Communication distance")
+    plt.ylabel("# of tasks solved")
+    plt.legend()
+    plt.show()
+
+def experiment_6():
+    # Storing results across all episodes, per comm_dist
+    results = {}
+    for comm_dist in COMM_DISTANCES:
+        results[comm_dist] = []
+
+    for i in range(NUM_EPISODES):
+        # Performing experiment with different communication distances
+        for comm_dist in COMM_DISTANCES:   
             # Initializing tasks at random positions
-            task = Task(task_capacity=task_capacity, task_radius=task_radius)
-            tasks.append(task)
+            tasks = []
+            for _ in range(2): # Assuming T=2 tasks
+                task = Task(task_capacity=3, task_radius=50)
+                tasks.append(task)
 
-            # Performing experiment with different numbers of agents
-            results_per_agent_num = []
-            for agent_num in num_agents:
+            # Initializing agents at random positions
+            agents = []
+            for _ in range(30): # Assuming R=30 agents
+                agent = Agent(comm_dist=comm_dist)
+                agents.append(agent)
 
-                # Performing experiment with different communication distances
-                results_per_comm_dist = []
-                for comm_dist in comm_distances: 
-                    # Initializing agents at random positions
-                    agents = []
-                    for agent_i in range(agent_num):
-                        agent = Agent(comm_dist=comm_dist)
-                        agents.append(agent)
+            # Starting simulation
+            completed_tasks = 0
+            for _ in range(NUM_EPOCHS):
+                for task_i in range(len(tasks)):
+                    task = tasks[task_i]
+                    task_completed = task.sufficient_agents_in_radius(agents, invoke_calloff=True)
+                    if task_completed:
+                        completed_tasks += 1
+                        tasks[task_i] = Task(task_capacity=3, task_radius=50)
 
-                    # Performing simulation for a specified number of epochs
-                    completed_tasks = 0
-                    for i in range(num_epochs):
-                        # Updating movement (velocity and position) of agent
-                        for agent in agents:
-                            # Callout is performed before updating velocities, so that each agent can evaluate
-                            # (during velocity update) whether conditions are met for it to follow the target_pos
-                            # it may receive from callout.
-                            agent.callout(agents)
-                            agent.update_velocity(tasks)
-                            agent.update_pos()
-                        
-                        for task_i in range(len(tasks)):
-                            task = tasks[task_i]
-                            task_completed = task.sufficient_agents_in_radius(agents)
-                            if task_completed:
-                                completed_tasks += 1
-                                tasks[task_i] = Task(task_capacity=3, task_radius=50)
-                    results_per_comm_dist.append(completed_tasks)
-                results_per_agent_num.append(np.average(np.array(results_per_comm_dist)))
-            results_per_task_num.append(np.average(np.array(results_per_agent_num)))
-        results_per_episode.append(np.average(np.array(results_per_task_num)))
-    return results_per_episode, results_per_task_num, results_per_agent_num, results_per_comm_dist
+                # Updating movement (velocity and position) of agent
+                for agent in agents:
+                    # Callout is performed before updating velocities, so that each
+                    # agent can evaluate whether conditions are met for it to follow
+                    # the target_pos it may receive from callout.
+                    if agent.inside_task_radius:
+                        agent.callout(agents)
+                    agent.update_velocity()
+                    agent.update_pos()
+            results[comm_dist].append(completed_tasks)
+        print(f"Episode {i + 1} complete.")
+
+    # Plotting results
+    median_results = {x: np.median(results[x]) for x in COMM_DISTANCES}
+    average_results = {x: np.mean(results[x]) for x in COMM_DISTANCES}
+
+    for x in COMM_DISTANCES:
+        x_offsets = np.random.uniform(-20, 20, len(results[x]))  # Random offsets
+        plt.scatter([x + offset for offset in x_offsets], results[x], color='blue')
+
+    plt.plot(COMM_DISTANCES, [median_results[x] for x in COMM_DISTANCES], color='red', label='Median # tasks completed', marker='o')
+    plt.plot(COMM_DISTANCES, [average_results[x] for x in COMM_DISTANCES], color='green', label='Average # tasks completed', marker='o')
+
+    plt.title("TASK F)")
+    plt.xlabel("Communication distance")
+    plt.ylabel("# of tasks solved")
+    plt.legend()
+    plt.show()
+
 
 if __name__ == "__main__":
+    print("\n\n################### TASK A) ###################\n\n")
     experiment_1()
-    #experiment_2()
-    #experiment_3()
-    #experiment_4()
-    #experiment_5()
-    task_a_results, _, _, _ = experiment(num_episodes=20, num_tasks=[1], task_capacity=1, task_radius=50, num_agents=[1], comm_distances=[0], num_epochs=5000)
-    
-    x = np.linspace(1, 20, 20)
-    y = task_a_results
-    plt.plot(x, y, 'o')
-    plt.title("Number of tasks solved per run")
-    plt.xlabel("Run #")
-    plt.ylabel("# of tasks solved")
-    plt.show()
+    print("\n\n################### TASK B) ###################\n\n")
+    experiment_2()
+    print("\n\n################### TASK C) ###################\n\n")
+    experiment_3()
+    print("\n\n################### TASK D) ###################\n\n")
+    experiment_4()
+    print("\n\n################### TASK E) ###################\n\n")
+    experiment_5()
+    print("\n\n################### TASK F) ###################\n\n")
+    experiment_6()
