@@ -18,10 +18,12 @@ class Task:
         self.task_radius = task_radius
 
     def sufficient_agents_in_radius(self, agents: list):
+        """
+        Checks whether there are enough agents within the task's radius for it to be complete.
+        """
         num_agents_in_radius = 0
         for agent in agents:        
-            # Checking if the agent is within the task radius, adding to
-            # num_agents_in_radius
+            # Checking if the agent is within the task radius, adding to num_agents_in_radius
             if distance_euclid(self.pos, agent.pos) < self.task_radius:
                 num_agents_in_radius += 1
 

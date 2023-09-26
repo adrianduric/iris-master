@@ -1,6 +1,6 @@
 # Constants for simulation running
 NUM_EPOCHS = 5000 # Number of iterations per run
-NUM_RUNS = 20 #Number of runs for task a)
+NUM_EPISODES = 20 #Number of runs for task a)
 
 # Constants for agent specifications
 AGENT_ABSOLUTE_VELOCITY = 25 # Rv as specified in assignment text
