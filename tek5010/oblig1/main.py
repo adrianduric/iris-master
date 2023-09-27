@@ -168,6 +168,7 @@ def experiment_4():
     plt.title("TASK D)")
     plt.xlabel("# of tasks")
     plt.ylabel("# of tasks solved")
+    plt.legend()
     plt.show()
 
 def experiment_5():
