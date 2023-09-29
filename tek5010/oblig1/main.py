@@ -35,7 +35,8 @@ def experiment_1():
     plt.title("TASK A)")
     plt.xlabel("Time (# of epochs)")
     plt.ylabel("# of tasks solved")
-    plt.show()
+    plt.savefig(fname='figures/task_a')
+    plt.close()
 
 
 def experiment_2():
@@ -74,7 +75,8 @@ def experiment_2():
     plt.xlabel("Time (# of epochs)")
     plt.ylabel("# of tasks solved")
     plt.legend()
-    plt.show()
+    plt.savefig(fname='figures/task_b')
+    plt.close()
 
 def experiment_3():
     # Initializing task T at random position
@@ -115,7 +117,8 @@ def experiment_3():
     plt.xlabel("Time (# of epochs)")
     plt.ylabel("# of tasks solved")
     plt.legend()
-    plt.show()
+    plt.savefig(fname='figures/task_c')
+    plt.close()
 
 def experiment_4():
     # Storing results across all episodes
@@ -163,7 +166,8 @@ def experiment_4():
     plt.xlabel("Time (# of epochs)")
     plt.ylabel("# of tasks solved")
     plt.legend()
-    plt.show()
+    plt.savefig(fname='figures/task_d')
+    plt.close()
 
 def experiment_5():
     # Performing experiment with different communication distances
@@ -210,7 +214,8 @@ def experiment_5():
     plt.xlabel("Time (# of epochs)")
     plt.ylabel("# of tasks solved")
     plt.legend()
-    plt.show()
+    plt.savefig(fname='figures/task_e')
+    plt.close()
 
 def experiment_6():
     # Performing experiment with different communication distances
@@ -257,7 +262,8 @@ def experiment_6():
     plt.xlabel("Time (# of epochs)")
     plt.ylabel("# of tasks solved")
     plt.legend()
-    plt.show()
+    plt.savefig(fname='figures/task_f')
+    plt.close()
 
 
 if __name__ == "__main__":
