@@ -81,8 +81,6 @@ def experiment_2():
 def experiment_3():
     # Initializing task T at random position
     task = Task(task_capacity=TASK_CAPACITY_C, task_radius=TASK_RADIUS_C)
-    tasks = []
-    tasks.append(task)
     
     # Performing experiment with different numbers of agents
     for agent_num in NUM_AGENTS_C:
@@ -101,12 +99,10 @@ def experiment_3():
                 agent.update_velocity()
                 agent.update_pos()
             
-            for task_i in range(len(tasks)):
-                task = tasks[task_i]
-                task_completed = task.sufficient_agents_in_radius(agents)
-                if task_completed:
-                    completed_tasks += 1
-                    tasks[task_i] = Task(task_capacity=TASK_CAPACITY_C, task_radius=TASK_RADIUS_C)
+            task_completed = task.sufficient_agents_in_radius(agents)
+            if task_completed:
+                completed_tasks += 1
+                task = Task(task_capacity=TASK_CAPACITY_C, task_radius=TASK_RADIUS_C)
             results[i] = completed_tasks
         x = np.linspace(1, NUM_EPOCHS_C, NUM_EPOCHS_C)
         y = results
@@ -208,6 +204,7 @@ def experiment_5():
         x = np.linspace(1, NUM_EPOCHS_E, NUM_EPOCHS_E)
         y = results
         plt.plot(x, y, label=f'Rd = {comm_dist}')
+        print(f"Simulations for Rd = {comm_dist} complete.")
 
     # Plotting results    
     plt.title("TASK E)")
@@ -256,6 +253,7 @@ def experiment_6():
         x = np.linspace(1, NUM_EPOCHS_F, NUM_EPOCHS_F)
         y = results
         plt.plot(x, y, label=f'Rd = {comm_dist}')
+        print(f"Simulations for Rd = {comm_dist} complete.")
 
     # Plotting results
     plt.title("TASK F)")

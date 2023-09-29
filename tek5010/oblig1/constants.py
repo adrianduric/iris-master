@@ -13,7 +13,7 @@ TASK_RADIUS_B = 50
 NUM_AGENTS_B = [3, 5, 10, 20, 30] # Number of agents
 
 # Task c)
-NUM_EPOCHS_C = int(1e5)
+NUM_EPOCHS_C = int(2e4)
 TASK_CAPACITY_C = 3
 TASK_RADIUS_C = 50
 NUM_AGENTS_C = [3, 5, 10, 20, 30]
