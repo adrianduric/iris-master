@@ -31,13 +31,11 @@ class Task:
 
             # Checking if enough rgents are close enough to task to complete it
             if num_agents_in_radius >= self.task_capacity:
-                
-                # Tells agents to perform calloff when this task is completed, if specified
-                if invoke_calloff:
-                    for agent in agents: 
-                        if distance_euclid(self.pos, agent.pos) < self.task_radius:
+                for agent in agents: 
+                    if distance_euclid(self.pos, agent.pos) < self.task_radius:
+                        agent.inside_task_radius = False
+                        # Tells agents to perform calloff when this task is completed, if specified
+                        if invoke_calloff:
                             agent.calloff(agents)
-                
                 return True
-                          
         return False

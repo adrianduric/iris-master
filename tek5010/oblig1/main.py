@@ -40,8 +40,6 @@ def experiment_1():
 
 
 def experiment_2():
-    # Initializing task T at random position
-    task = Task(task_capacity=TASK_CAPACITY_B, task_radius=TASK_RADIUS_B)
     
     # Performing experiment with different numbers of agents
     for agent_num in NUM_AGENTS_B:
@@ -50,6 +48,9 @@ def experiment_2():
         for _ in range(agent_num):
             agent = Agent()
             agents.append(agent)
+            
+        # Initializing task T at random position
+        task = Task(task_capacity=TASK_CAPACITY_B, task_radius=TASK_RADIUS_B)
 
         # Starting simulation
         results = np.zeros((NUM_EPOCHS_B))
@@ -69,6 +70,7 @@ def experiment_2():
         x = np.linspace(1, NUM_EPOCHS_B, NUM_EPOCHS_B)
         y = results
         plt.plot(x, y, label=f'R = {agent_num}')
+        print(f"Simulations for R = {agent_num} complete.")
 
     # Plotting results    
     plt.title("TASK B)")
@@ -79,9 +81,6 @@ def experiment_2():
     plt.close()
 
 def experiment_3():
-    # Initializing task T at random position
-    task = Task(task_capacity=TASK_CAPACITY_C, task_radius=TASK_RADIUS_C)
-    
     # Performing experiment with different numbers of agents
     for agent_num in NUM_AGENTS_C:
         # Initializing agents at random positions
@@ -89,6 +88,9 @@ def experiment_3():
         for _ in range(agent_num):
             agent = Agent()
             agents.append(agent)
+        
+        # Initializing task T at random position
+        task = Task(task_capacity=TASK_CAPACITY_C, task_radius=TASK_RADIUS_C)
 
         # Starting simulation
         results = np.zeros((NUM_EPOCHS_C))
@@ -98,15 +100,17 @@ def experiment_3():
             for agent in agents:
                 agent.update_velocity()
                 agent.update_pos()
-            
+
             task_completed = task.sufficient_agents_in_radius(agents)
             if task_completed:
                 completed_tasks += 1
                 task = Task(task_capacity=TASK_CAPACITY_C, task_radius=TASK_RADIUS_C)
             results[i] = completed_tasks
+
         x = np.linspace(1, NUM_EPOCHS_C, NUM_EPOCHS_C)
         y = results
         plt.plot(x, y, label=f'R = {agent_num}')
+        print(f"Simulations for R = {agent_num} complete.")
 
     # Plotting results    
     plt.title("TASK C)")
@@ -265,15 +269,15 @@ def experiment_6():
 
 
 if __name__ == "__main__":
-    print("\n\n################### TASK A) ###################\n\n")
+    print("\n################### TASK A) ###################")
     experiment_1()
-    print("\n\n################### TASK B) ###################\n\n")
+    print("\n################### TASK B) ###################")
     experiment_2()
-    print("\n\n################### TASK C) ###################\n\n")
+    print("\n################### TASK C) ###################")
     experiment_3()
-    print("\n\n################### TASK D) ###################\n\n")
+    print("\n################### TASK D) ###################")
     experiment_4()
-    print("\n\n################### TASK E) ###################\n\n")
+    print("\n################### TASK E) ###################")
     experiment_5()
-    print("\n\n################### TASK F) ###################\n\n")
+    print("\n################### TASK F) ###################")
     experiment_6()
