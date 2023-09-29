@@ -20,7 +20,7 @@ NUM_AGENTS_C = [3, 5, 10, 20, 30]
 
 # Task d)
 NUM_EPISODES_D = 10 # Number of episodes
-NUM_EPOCHS_D = int(1.5e4)
+NUM_EPOCHS_D = int(1e5)
 NUM_TASKS_D = [2, 10, 20] # Number of tasks
 TASK_CAPACITY_D = 3
 TASK_RADIUS_D = 50 
