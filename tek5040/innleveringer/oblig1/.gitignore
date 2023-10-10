@@ -1,8 +1,3 @@
-answers.txt
 data_road
 delivery_adriandu.zip
-env
 out_*
-plots_*
-segmentation_models.py
-train.py
