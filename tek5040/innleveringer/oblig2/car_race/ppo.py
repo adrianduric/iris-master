@@ -100,7 +100,11 @@ def calculate_returns(rewards, gamma):
     """
 
     returns = np.zeros(len(rewards), dtype=np.float32)
-    # TODO: Calculate returns
+    
+    returns[len(rewards) - 1] = rewards[len(rewards) - 1]
+
+    for i in reversed(range(len(returns) - 1)):
+        returns[i] = rewards[i] + gamma * returns[i + 1]
 
     return returns
 
@@ -114,9 +118,11 @@ def value_loss(target, prediction):
     Returns:
         loss : mean squared error difference between predictions and targets
     """
-    # TODO: Implement value loss
+    
+    
+    loss = tf.reduce_mean(tf.square(target - prediction))
 
-    return tf.zeros(tf.shape(target), dtype=tf.float32) # Remove this line
+    return loss
 
 def policy_loss(pi_a, pi_old_a, advantage, epsilon):
     """Calculate policy loss as in https://arxiv.org/abs/1707.06347
@@ -133,9 +139,12 @@ def policy_loss(pi_a, pi_old_a, advantage, epsilon):
     Returns:
         loss : scalar loss value
     """
-
-    # TODO: implement policy loss
-    loss = tf.constant(0, dtype=tf.float32) # remove this line
+  
+    policy_change_rate = pi_a / pi_old_a
+    clip = tf.clip_by_value(policy_change_rate, 1 - epsilon, 1 + epsilon)
+    minimum = tf.minimum(policy_change_rate * advantage, clip * advantage)
+    
+    loss = -tf.reduce_mean(minimum)
 
     return loss
 
@@ -259,8 +268,8 @@ def main():
 
     iterations = 500
     K = 3
-    num_episodes = 8
-    maxlen_environment = 512
+    num_episodes = 2
+    maxlen_environment = 12
     action_repeat = 4
     maxlen = maxlen_environment // action_repeat # max number of actions
     batch_size = 32

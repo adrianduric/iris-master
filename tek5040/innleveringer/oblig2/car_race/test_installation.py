@@ -1,6 +1,6 @@
 import gym
 
-env = gym.make('CarRacing-v0')
+env = gym.make('CarRacing-v2')
 observation = env.reset()
 for t in range(1500):
     #print(t)
