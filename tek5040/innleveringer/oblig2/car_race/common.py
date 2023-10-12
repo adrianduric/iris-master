@@ -2,7 +2,7 @@ import tensorflow as tf
 
 def preprocess(observation):
 
-    observation = tf.expand_dims(tf.cast(observation, tf.float32), 0)
+    observation = tf.expand_dims(tf.cast(observation, tf.float64), 0)
     # change pixel values from [0, 255] to [-1, 1]
     observation = observation / 127.5 - 1
 

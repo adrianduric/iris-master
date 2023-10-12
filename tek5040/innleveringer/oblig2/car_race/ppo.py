@@ -140,6 +140,8 @@ def policy_loss(pi_a, pi_old_a, advantage, epsilon):
         loss : scalar loss value
     """
   
+    advantage = tf.expand_dims(advantage, axis=1)
+
     policy_change_rate = pi_a / pi_old_a
     clip = tf.clip_by_value(policy_change_rate, 1 - epsilon, 1 + epsilon)
     minimum = tf.minimum(policy_change_rate * advantage, clip * advantage)
@@ -329,11 +331,6 @@ def main():
         ############################## Training ################################
         start = time.time()
 
-        # TODO: Implement one iteration of policy iteration. For each batch you
-        # need to calculate the "loss" (the negative of what we want to
-        # maximize), take the gradient of the loss with respect to the trainable
-        # variables of both 'policy_network' and 'value_network', and update the
-        # variables using the optimizer.
         for epoch in range(K):
             for batch in dataset:
                 observation, action, advantage, pi_old, value_target, t = batch
@@ -347,11 +344,8 @@ def main():
                         + c1*value_loss(value_target, v) \
                         + c2*entropy_loss(pi_a)
                     
-                policy_gradients = tape.gradient(loss, policy_network.trainable_variables)
-                value_gradients = tape.gradient(loss, value_network.trainable_variables)
-
-                optimizer.apply_gradients(zip(policy_gradients, policy_network.trainable_variables))
-                optimizer.apply_gradients(zip(value_gradients, value_network.trainable_variables))                
+                gradients = tape.gradient(loss, policy_network.trainable_variables + value_network.trainable_variables)
+                optimizer.apply_gradients(zip(gradients, policy_network.trainable_variables + value_network.trainable_variables))          
 
         print("Iteration %d. Optimized surrogate loss in %f sec." %
               (iteration, time.time()-start))

@@ -106,7 +106,7 @@ def get_agent(policy):
     elif policy == "straight":
         return baselines.straight
     else:
-        agent = tf.keras.models.load_model(policy)
+        agent = tf.saved_model.load(policy)
         return agent
 
 if __name__ == '__main__':
