@@ -270,8 +270,8 @@ def main():
 
     iterations = 500
     K = 3
-    num_episodes = 2
-    maxlen_environment = 12
+    num_episodes = 8
+    maxlen_environment = 512
     action_repeat = 4
     maxlen = maxlen_environment // action_repeat # max number of actions
     batch_size = 32
