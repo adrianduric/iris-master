@@ -338,6 +338,21 @@ def main():
             for batch in dataset:
                 observation, action, advantage, pi_old, value_target, t = batch
 
+                with tf.GradientTape() as tape:
+                    pi_a = policy_network.policy(observation)
+                    pi_a = activations.softmax(pi_a)
+                    v = value_network(observation, maxlen - t)
+                    
+                    loss = policy_loss(pi_a, pi_old, advantage, epsilon) \
+                        + c1*value_loss(value_target, v) \
+                        + c2*entropy_loss(pi_a)
+                    
+                policy_gradients = tape.gradient(loss, policy_network.trainable_variables)
+                value_gradients = tape.gradient(loss, value_network.trainable_variables)
+
+                optimizer.apply_gradients(zip(policy_gradients, policy_network.trainable_variables))
+                optimizer.apply_gradients(zip(value_gradients, value_network.trainable_variables))                
+
         print("Iteration %d. Optimized surrogate loss in %f sec." %
               (iteration, time.time()-start))
 
