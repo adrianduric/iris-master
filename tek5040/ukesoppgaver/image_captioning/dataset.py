@@ -120,7 +120,8 @@ Now you'll create a tf.keras model where the output layer is the last convolutio
 
 def fea_extract_model():
     image_model = tf.keras.applications.NASNetMobile(include_top=False,
-                                                     weights='imagenet')
+                                                     weights='imagenet',
+                                                     input_shape=(224,224,3))
     new_input = image_model.input
     hidden_layer = image_model.layers[-1].output
 
