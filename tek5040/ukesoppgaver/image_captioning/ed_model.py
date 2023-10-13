@@ -32,9 +32,37 @@ class UniformAttention(layers.Layer):
 ###################################
 # DotProduct Attention
 ###################################
-class DotProductAttention(layers.Layer):    
-    #implement this
-    pass
+class DotProductAttention(layers.Layer):
+
+  def build(self, input_shape):
+    features_shape = input_shape[0]
+    state_shape = input_shape[1]
+
+    Q_init = tf.random_normal_initializer()
+    self.Q = tf.Variable(initial_value=Q_init(shape=(state_shape[1], state_shape[1]), dtype='float32'), trainable=True)
+
+    K_init = tf.random_normal_initializer()
+    self.K = tf.Variable(initial_value=K_init(shape=(state_shape[1], features_shape[1]), dtype='float32'), trainable=True)
+
+  def call(self, inputs):
+    feature_vectors, state_output = inputs
+
+    batch_size = tf.shape(feature_vectors)[0]
+    num_feature_vectors = tf.shape(feature_vectors)[1]
+    attention_weights = []
+
+    for i in range(batch_size):
+      state_transposed = tf.transpose(state_output)
+      attention_weight = tf.transpose(self.Q @ state_transposed) @ self.K @ feature_vectors[i]
+      print(feature_vectors[i].shape)
+      print(attention_weight.shape)
+      attention_weights.append(attention_weight)
+    attention_weights = tf.stack(attention_weights)
+
+    attention_weights = tf.nn.softmax(attention_weights)
+    context_vector = tf.reduce_sum(attention_weights * feature_vectors, axis=1)
+    
+    return context_vector, attention_weights
     
 ###################################
 # Bahdanau Attention
@@ -77,7 +105,7 @@ class RNN_Decoder(tf.keras.Model):
     if self.attention_type == "uniform":
       self.attention = UniformAttention()
     elif self.attention_type == "dotproduct":
-        raise NotImplementedError("TODO")
+      self.attention = DotProductAttention()
     elif self.attention_type == "bahdanau":
         raise NotImplementedError("TODO")
     else:
@@ -93,7 +121,10 @@ class RNN_Decoder(tf.keras.Model):
     y, features, state_output, hidden = inputs
 
     # defining attention as a separate model
-    context_vector, attention_weights = self.attention(features, state_output)
+    if self.attention_type == "uniform": 
+      context_vector, attention_weights = self.attention(features, state_output)
+    else:
+      context_vector, attention_weights = self.attention([features, state_output])
 
     # y shape after passing through embedding == (batch_size, 1, embedding_dim)
     y = self.embedding(y)

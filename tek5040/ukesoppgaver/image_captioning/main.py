@@ -41,7 +41,7 @@ attention_features_shape = feature_height * feature_width
 spatial_positions = feature_height * feature_width
 
 attention_type = "uniform"
-#attention_type = "dotproduct"
+attention_type = "dotproduct"
 #attention_type = "bahdanau"
 BATCH_SIZE_ = 16
 
