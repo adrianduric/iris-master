@@ -1,0 +1,15 @@
+USL Curve fit
+
+b)
+We need to use non-linear regression methods because the USL function itself is non-linear. This complicates the analysis because we cannot use an analytical approach to find an exact linear least-squares fit as in linear regression. Non-linear regression involves more complex, non-linear methods being used.
+
+USL Performance
+
+a)
+N is the number of processors, or agents, performing a task.
+
+Alpha is essentially a measure of seriality; some part of a task may not be parallelizable, meaning a single agent has to perform it alone anyway. Alpha is then a measure of how serial a task is by nature. This explanation makes most sense for alpha >= 0. For alpha < 0, this could be regarded as emergence; when it turns out that the efficiency of task performance increases superlinearly through adding more agents.
+
+Beta measures how the inefficiency of sharing resources between the agents in a task. If multiple agents require the same resources, a bottleneck may arise where the resources are distributed poorly. This can also be thought of as interprocess communication, and how well the processors share data and resources between each other. Higher beta means lower IPC efficiency. Considering that IPC by nature only functions as a potential bottleneck and should never increase overall performance (as with emergence with alpha), beta should always be >= 0.
+
+

@@ -16,7 +16,9 @@ def fun(parameter):
 xValues = np.array([0, 15, 30, 60, 100, 125, 150]) # the x-axis values
 yValuesR1 = np.array([0, 7, 24, 22, 25, 29, 26]) # the R1 data set
 yValuesR2 = np.array([0, 20, 50, 64, 30, 26, 15]) # the R2 data set
-yUSLdata = yValuesR1 # set data set to regress on
+#yUSLdata = yValuesR1 # set data set to regress on
+yUSLdata = yValuesR2 # set data set to regress on
+
 
 # Estimate the USL parameters using scipy NLS
 guessParameterUSL = [0.0, 0.000] # initial parameter guess
