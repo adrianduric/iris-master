@@ -139,8 +139,6 @@ def policy_loss(pi_a, pi_old_a, advantage, epsilon):
     Returns:
         loss : scalar loss value
     """
-  
-    advantage = tf.expand_dims(advantage, axis=1)
 
     policy_change_rate = pi_a / pi_old_a
     clip = tf.clip_by_value(policy_change_rate, 1 - epsilon, 1 + epsilon)
@@ -270,8 +268,8 @@ def main():
 
     iterations = 500
     K = 3
-    num_episodes = 2
-    maxlen_environment = 12
+    num_episodes = 8
+    maxlen_environment = 512
     action_repeat = 4
     maxlen = maxlen_environment // action_repeat # max number of actions
     batch_size = 32
@@ -333,19 +331,18 @@ def main():
 
         for epoch in range(K):
             for batch in dataset:
-                observation, action, advantage, pi_old, value_target, t = batch
-                action = tf.expand_dims(action, -1)
+                observation, action, advantage, pi_old, value_target, t = batch 
 
                 with tf.GradientTape() as tape:
-                    pi_a = policy_network.policy(observation)
-                    pi_a = activations.softmax(pi_a)
-                    pi_a = tf.squeeze(tf.gather(pi_a, action, batch_dims=1), -1)
-                    pi_old_a = tf.squeeze(tf.gather(pi_old, action, batch_dims=1), -1)
+                    pi = policy_network.policy(observation)
+                    pi = activations.softmax(pi)
+                    pi_a = tf.gather(pi, action, batch_dims=1)
+                    pi_old_a = tf.gather(pi_old, action, batch_dims=1)
                     v = value_network(observation, maxlen - t)
                     
                     loss = policy_loss(pi_a, pi_old_a, advantage, epsilon) \
                         + c1*value_loss(value_target, v) \
-                        + c2*entropy_loss(pi_a)
+                        + c2*entropy_loss(pi)
                     
                 gradients = tape.gradient(loss, policy_network.trainable_variables + value_network.trainable_variables)
                 optimizer.apply_gradients(zip(gradients, policy_network.trainable_variables + value_network.trainable_variables))          
