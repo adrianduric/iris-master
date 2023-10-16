@@ -270,8 +270,8 @@ def main():
 
     iterations = 500
     K = 3
-    num_episodes = 8
-    maxlen_environment = 512
+    num_episodes = 2
+    maxlen_environment = 12
     action_repeat = 4
     maxlen = maxlen_environment // action_repeat # max number of actions
     batch_size = 32
@@ -334,13 +334,16 @@ def main():
         for epoch in range(K):
             for batch in dataset:
                 observation, action, advantage, pi_old, value_target, t = batch
+                action = tf.expand_dims(action, -1)
 
                 with tf.GradientTape() as tape:
                     pi_a = policy_network.policy(observation)
                     pi_a = activations.softmax(pi_a)
+                    pi_a = tf.squeeze(tf.gather(pi_a, action, batch_dims=1), -1)
+                    pi_old_a = tf.squeeze(tf.gather(pi_old, action, batch_dims=1), -1)
                     v = value_network(observation, maxlen - t)
                     
-                    loss = policy_loss(pi_a, pi_old, advantage, epsilon) \
+                    loss = policy_loss(pi_a, pi_old_a, advantage, epsilon) \
                         + c1*value_loss(value_target, v) \
                         + c2*entropy_loss(pi_a)
                     

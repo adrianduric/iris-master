@@ -1,0 +1,38 @@
+Urn models
+
+a)
+Forklart symbolene i formelen på papir.
+Positiv feedback for ballene B i farge C er når systemet øker B i et timestep, tilsvarende er negativ feedback når B minsker etter et timestep. Sannsynligheten for positiv feedback er da sannsynligheten for at B øker etter et timestep. 
+
+Slik formelen er satt opp er det to ting som bestemmer om B vil øke eller minke: 1) sannsynligheten for positiv feedback, som avhenger av B/N der N er totalt antall baller, og 2) B/N, altså andelen av de N ballene som har farge C.
+
+Hvis P_FB = 0, vil systemet bli en Ehrenfest-urnemodell hvor B forventes å øke hvis B/N < 0.5, og B forventes å minke hvis B > 0.5. Systemet konvergerer mot B/N = 0.5 for begge pga. dette.
+Hvis P_FB = 1, vil systemet bli en Eigen-urnemodell som er invers av Ehrenfest: B forventes å øke for B/N > 0.5, og minsker for < 0.5. Systemet konvergerer mot B/N = 1 for den predominante klassen, og B/N = 0 for den andre.
+
+For den generelle (Hamann-)modellen, er P_FB satt slik at P_FB < 0.5 for B/N < 0.23 eller B/N > 0.77, P_FB > 0.5 for B/N innenfor [0.23, 0.77]. Slik formelen er satt opp gir dette 4 scenarier, avhengig av B/N i et gitt timestep:
+
+1) B/N < 0.23. Termene i de to parentesene blir negativ * negativ = positiv, og vi forventer positiv vekst som går mot B/N = 0.23.
+
+2) B/N innenfor [0.23, 0.5) (på 0.5 er det tilfeldig hvor man går). Termene blir positiv * negativ = negativ, og man får negativ forventet vekst som går mot B/N = 0.23.
+
+3) B/N innenfor (0.5, 0.77]. Positiv * positiv = positiv, og man får positiv forventet vekst som går mot B/N = 0.77.
+
+4) B/N > 0.77. Negativ * positiv = negativ gir forventet negativ vekst som går mot B/N = 0.77.
+
+b)
+For at alle roboter skal gå en av to veier fungerer Eigen-modellen godt, som begrunnet ovenfor.
+
+c)
+Som begrunnet ovenfor: Ehrenfest-modellen.
+
+d)
+Som begrunnet ovenfor: Hamann-modellen.
+
+
+Consensus modelling
+
+a)
+Voter model/stemmemodellen går ut på at hver agent velger en tilfeldig agent blant sine naboagenter, og bytter sin mening til den agentens mening, eller "stemme". Algoritmen er enkel og presis, men konvergerer sakte, antagelig pga. mye tilfeldig støy siden meningen en agent velger er stokastisk.
+
+b)
+Majoritetsregelen ligner, og går også ut på at en agent ser på alle sine naboer, men inkluderer nå også seg selv. Nå teller den opp antall forekomster av hver mening, og velger den meningen som forekommer oftest. Denne konvergerer raskere, men er mindre presis. Det er forskjellige måter å definere presisjon på, men her kan man regne det som hvor ofte systemet konvergerer mot majoritetsmeningen av alle agenter ved initiell tilstand.
