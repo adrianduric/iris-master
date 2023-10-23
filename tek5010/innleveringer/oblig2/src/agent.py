@@ -1,5 +1,6 @@
 from utils import *
 from constants import *
+from task import *
 import numpy as np
 
 class Agent:
@@ -122,5 +123,45 @@ class Agent:
 
             if np.allclose(self.pos, agent.target_pos) and distance_euclid(self.pos, agent.pos) < self.comm_dist:
                 agent.target_pos = None
-                        
+
+    def auction(self, agents: list, task: Task, num_agents_required: int):
+        """
+        Performs a simple auction. When a task is discovered, the agent (auctioneer) calls out to other
+        agents (bidders) within comm_dist. It views their current positions (which serve as bids). Depending
+        on how many more agents are required to complete the task (including the auctioneer), the auctioneer 
+        accepts the highest bid(s).
+
+        This function is called from the task when at least one agent is inside its radius.
+        """             
+
+        # The best bidders and their bids are stored as an ordered list of tuples
+        best_bidders_and_bids = []
+
+        for agent in agents:  
+            if agent == self:
+                continue
+
+            if (not agent.inside_task_radius) and distance_euclid(self.pos, agent.pos) < self.comm_dist:
+
+                # The distance between the agent and task is calculated, and used as the bid (lower is better)
+                bid = distance_euclid(agent.pos, task.pos)
+
+                # If the required number of agents to complete the task isn't met yet, the bid and its bidder
+                # is saved in the list
+                if len(best_bidders_and_bids) < num_agents_required:
+                    best_bidders_and_bids.append((agent, bid))
+                    best_bidders_and_bids = sorted(best_bidders_and_bids, key=lambda x: x[1]) # Sorts list by bid
+
+                # If the bid is better than the currently worst winning bid, the worst winning bid and its
+                # bidder is replaced by this bid and its bidder
+                else:
+                    worst_winning_bid = best_bidders_and_bids[len(best_bidders_and_bids) - 1][1]
+                    if bid < worst_winning_bid:
+                        best_bidders_and_bids[len(best_bidders_and_bids) - 1] = (agent, bid)
+                        best_bidders_and_bids = sorted(best_bidders_and_bids, key=lambda x: x[1])
+
+        # After the auction, the winner(s) have their target_pos set towards the task
+        for bid_and_bidder in best_bidders_and_bids:
+            bidder = bid_and_bidder[0]
+            bidder.target_pos = task.pos
 
