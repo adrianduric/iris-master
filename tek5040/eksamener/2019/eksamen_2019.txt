@@ -1,0 +1,140 @@
+1)
+
+Accuracy måler bare andelen av alle pikslene som blir riktig klassifisert. Siden ganske få piksler på et bilde av et veifelt er piksler som viser veifeltlinjer, kan man oppnå høy accuracy med å anta at alle pikslene er bakgrunn, og dermed få tilsynelatende gode resultater med veldig primitiv klassifisering. Noen andre gode measures som løser dette problemet er:
+
+    - Recall: av alle piksler som faktisk er veilinjer, hvor stor andel ble klassifisert riktig (som veilinjer)?
+    - Precision: av alle piksler som ble klassifisert som veilinjer, hvor mange er faktisk veilinjer?
+
+Merk at akkurat i tilfellet hvor 0 piksler blir klassifisert som veilinjer, gir Precision ikke et tall (deling på 0), og derfor passer Recall best i dette tilfellet.
+
+Poeng: 7/7
+
+2)
+
+Man kan lage et decoder-nettverk, der dekoderen gir sekvensielle outputs. I hver state av decoderen lærer man nettverket å måle similarity til hver av pikslene i input-bildet, og bruker soft-attention til å velge hvilke deler av bildet som skal påvirke output mest i den staten.
+
+Poeng: 6/12
+
+3)
+
+Det er mulig at greedy policy kan gi suboptimal verdi fra state-value function. Dersom RL-nettverket ikke er ferdig trent, for eksempel, vil mange states ha ukjent return, og action-value function reflekterer derfor ennå ikke den sanne forventede returnen av å gjøre en action fra en viss state. Når vi da når en ny og hittil ukjent state, kan vi få dårlig reward. Med den originale policyen kan det hende at vi ikke hadde valgt den staten med dårlig reward, avhengig av hva den opprinnelige policyen var.
+
+Poeng: 0/7
+
+4)
+
+Hensikten med epsilon i clip-operasjonen er å sikre at policyen ikke endres for raskt, tilsvarende overshooting i vanlig supervised learning med gradient descent. Uten clip risikerer man at policyen drastisk øker sannsynligheten for å gjøre visse actions. Dersom disse actionsene viser seg over tid å lede til dårlige states, ønsker vi å lære policyen til å redusere sannsynligheten for dem igjen, men dersom sannsynligheten allerede er for stor, kan det være vanskelig å sample nok andre actions til at den lærer å velge noe annet. Derfor er clipping fordelaktig for å bevare stabilitet i nettverket, og gå forsiktig frem med å oppdatere policy. Hvor stor epsilon er, svarer til hvor mye vi tillater at policyen endrer seg i en oppdatering.
+
+Poeng: 7/10
+
+5a)
+
+For meta learning ønsker Tom et meta-training set. Mens et vanlig treningssett består kun av (x, c) som brukes som treningseksempler, består et meta-training set av både training (support) og test (query) sets. Dvs. et treningssett har både mange (x, c) som fungerer som labelled treningsdata, og noen (x, c) som fungerer som testdata, altså data som brukes til å evaluere nettverket etter at det har blitt trent på support.
+
+I Tom sitt tilfelle vil han kunne dele opp sitt training set med 100 klasser, inn i mindre grupper av support og query sets, som til sammen utgjør hans meta training set. De nye klassene {truck, train, motorcycle} skal altså IKKE være blant klassene sett i meta training.
+
+Poeng: 2/5
+
+5b)
+
+Bob sitter på fire bilder; et labelled bilde til hver av klassene {truck, train, motorcycle}, og et unlabelled bilde som skal klassifiseres til en av klassene. Disse kan han bruke til et meta-test set hvor de labelled bildene er support, og unlabelled bildet er query.
+
+Poeng: 4/4
+
+5c)
+
+I Matching network lærer nettverket en mapping fra inputene til et felles domene hvor semantic similarity mellom inputene og bildet som skal klassifiseres måles. Disse semantic similarity-verdiene brukes til å tolke hvilke av de labelled bildene som ligner mest på bildet som skal klassifiseres, og sannsynlighetsvektoren er resultatet av en softmax av alle similarity-verdiene, slik at de kan tolkes som sannsynligheter for at bildet som skal klassifiseres hører til klassen til hvert av labelled bildene.
+
+Poeng: 3/3
+
+6a)
+
+Ethvert eksempel på at 3D-scener skal segmenteres fungerer. F.eks. en robot som observerer en tredimensjonal scene, og vil gjenkjenne objekter i scenen.
+
+Poeng: 2/2
+
+6b)
+
+PointNet oppnår permutation invariance ved å prosesere hvert punkt individuelt med en og samme transform gjennom en MLP.
+
+Poeng: 1/4
+
+6c)
+
+Edge convolution svarer til å utføre en konvolusjon over node i og alle dens naboer j. I standard konvolusjon (som i en CNN) er edge-funksjonen dot product mellom en node og vekten til dens kant, og aggregation er summen over alle nodene i nabolaget. I PointNet fungerer edge-funksjonen bare på det nåværende punktet (fortsatt dot product), og ingen aggregering gjøres.
+
+Poeng: 6/6
+
+7a)
+
+1. Detektering av objekter i bilder
+2. Feature extraction fra objekter
+3. Affinity computation mellom objekter fra forskjellige timesteps
+4. Assosiering av bilder mellom timesteps
+
+Poeng: 2/2
+
+7b)
+
+SiamFC er raskt pga. effektiv matching, og krever ikke re-training ved testing (i tracking), slik MDNet krever.
+
+Poeng: 2/4
+
+7c)
+
+En metodikk som forbedrer scale invariance er å legge på korrelasjonsfilter på SiamFC.
+
+Poeng: 5/5
+
+8)
+
+En vanlig GAN tar inn unlabelled samples, og består av en generator G(z) (z er støy) og en diskriminator D(x). En C-GAN tar inn labelled samples, og både generatoren G(z, c) og diskriminatoren D(x, c) tar også inn samples. I tilfelle med image colorization kunne man preprossesert fargebilder ved å konvertere dem til grayscale, slik at man har både grayscale-versjonen og "fasiten" i farger. En C-GAN kan da ta inn disse parene av grayscale og fargebilder, og trenes til å generere fargede versjoner av grayscale-bilder.
+
+Poeng: 8/10
+
+9a)
+
+ELBO svarer til forventningsleddet i formelen, altså ikke KL-distansen eller ln p(D).
+
+Poeng: 3/3
+
+9b)
+
+Siden ln p(D) er konstant, har vi fra formelen at ved å maksimere ELBO, minimerer vi KL-distansen mellom vår estimerte q(w) og p(w|D).
+
+Poeng: 4/4
+
+10a)
+
+I vanlig reinforcement learning antar vi at reward function er kjent, og vi ønsker å lære policy for å maksimere forventet return. I Inverse RL ser vi på reward function som ukjent, og vi ønsker å lære den basert på expert demonstrations. Vi antar da at ekspertene har optimal policy.
+
+Poeng: 2/2
+
+10b)
+
+Vi begynner med en initiell policy q0, og sampler fra den for å velge action for roboten. Deretter ønsker vi for hver iterasjon å oppdatere kostnad av trajectory mhp. parametrene i modellen. Deretter vil vi bruke oppdatert kostnad til å optimere policy q, og velge action igjen.
+
+Poeng: 2/5
+
+10c)
+
+I stedet for å lære en reward, ønsker vi nå å trene en diskriminator til å kunne skille mellom ekspertdemonstrasjoner og genererte handlinger, mens generatoren genererer handlinger som skal imitere eksperter så godt som mulig.
+
+Poeng: 2/5
+
+_______________________
+
+SUM: 68/100
+
+
+
+
+
+
+
+
+
+
+
+
+

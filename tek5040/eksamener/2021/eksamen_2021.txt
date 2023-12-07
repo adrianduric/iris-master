@@ -1,0 +1,134 @@
+1)
+
+Se tegning. Størrelsen er 7x7.
+
+Poeng: 12/12
+
+2)
+
+En fordel med self-attention networks i forhold til vanlige RNNs er at hver sekvensielle del av outputen har "minne" av hver del av inputen. I vanlige RNNs med lange sekvenser vil tidlige states vektes mindre og mindre i state vectoren som brukes til å lage output på senere timesteps; bidraget blir mindre jo lenger vekk i sekvensen det nåværende timesteppet er. I self-attention networks kan hver output "se" alle inputs, og hvor mye hver input (tilsvarende hver state vector) skal spille en rolle i en plass av outputen bestemmes av hvor godt den inputen sin key vector passer med query vectoren til inputen på den respektive plassen.
+
+En ulempe er at siden hver input må kombineres med alle andre inputs for å regne ut attention, blir det polynomielt mange flere utregninger ettersom input-størrelsen øker. Det blir det ikke i vanlige CNNs, der antallet utregninger med state vectors kun øker lineært med antallet timesteps i sekvensen.
+
+Ulempen kan motvirkes ved at output i (som korresponderer til input i) ikke regnes ut ved hjelp av alle inputtene, men ved å kun ta hensyn til et vindu av de k nærmeste inputtene til input i. Da går antallet utregninger ned fra O(n^2) til O(n*k), som er mindre siden k < n. Ulempen med dette er riktignok at vi minsker fordelen av å bruke self-attention til å begynne med, som var at alle inputtene inkluderes i utregningen av output.
+
+Poeng: 12/12
+
+3)
+
+En RL-algoritme basert på denne estimeringen er PPO. Se utregning for derivasjon.
+
+Poeng: 14/14
+
+4)
+
+Å bruke C-GAN er ment for når man har parede bilder, dvs. per bilde i et domene er det en "fasit", altså et tilsvarende bilde i det andre domenet (trenger ikke være bilder nødvendigvis). I dette tilfellet har man uparede bilder, som C-GAN ikke er designet for. I stedet burde han bruke CycleGAN, som håndterer image to image translation av uparede bilder i forskjellige domener ved å lære en transform fra det ene domenet til det andre og en transform fra det andre tilbake til det første.
+
+Poeng: 10/12
+
+5a)
+
+I meta-learning med Siamese networks, har man i meta training-settet mange par av Dsupport og Dquery. I Dsupport har man N par av (x_i, y_i) der x_i er inputs og y_i er labels. I Dquery har man et (x, y)-par der x er input og y er label (y må være samme label som minst en av y_i-ene i Dsupport).
+
+Trening av Siamese Network foregår ved å lage par (x_i, x) med alle mulige paringer av x_i fra Dsupport og den ene x-en fra Dquery. Man kjører hver av dem gjennom samme CNN, som produserer embeddings av x_i og x til et felles domene. I dette domenet måler man distanse mellom embeddingene, hvor mindre distanse betyr at embeddingene, og derfor også inputtene, ligner. 
+
+Når man har regnet ut distansen mellom hvert av parene (x_i, x), normaliserer man alle distansene og bruker dem som sannsynligheter for at x tilhører klassen til x_i, altså y_i. Dette tilsvarer objective-funksjonen; gitt en x i Dquery og alle x_i-ene som har blitt sett i Dsupport, regn sannsynligheten for at x tilhører y_i.
+
+Når nettverket trenes sjekker man den sanne y fra Dquery, og oppdaterer parametrene med backprop for å maksimere mhp. objective-funksjonen slik at sannsynligheten maksimeres for at x tilhører y_i når y = y_i, og minimerer sannsynligheten når y != y_i. Altså er Siamese Networks basert på objective-funksjonen.
+
+Poeng: 10/10
+
+5b)
+
+I self-supervised learning er rollen til en pretext task å trene opp et nettverk slik at det kan generere labels til et ellers unlabelled datasett. Downstream task da en typisk supervised learning-oppgave, som gjøres med datasettet som nå har fått labels overført fra å ha blitt trent på downstream task.
+
+Poeng: 2/2
+
+6a)
+
+Skrevet formel for hånd. Det er vanskelig å oppnå eksakt bayesisk inferens i dyp læring fordi vi ikke har p(w|Y, X) = p(w|D) gitt. Vi ønsker i stedet å estimere q(w) slik at KL-distansen mellom p(w|D) og q(w) blir så linen som mulig.
+
+Poeng: 3/4
+
+6b)
+
+Den viktigste innsikten i å bruke ELBO er at å maksimere ELBO mhp. q(w) svarer direkte til å minimere KL-distansen mellom q(w) og p(w|D). Som sagt i oppgaven parametriserer vi q som q(w, lambda) og vil maksimere L(lambda). 
+
+For å maksimere L må vi kunne derivere den, men siden vi bruker sampling fra q(w, lambda) til å estimere den, er ikke L deriverbar fordi sampling-operasjonen ikke er deriverbar. Vi bruker derfor re-parameterization trick til å omskrive samples som w^s = w(lambda, epsilon^s) der epsilon er samplet fra standardnormalfordelingen. L(lambda) er nå deriverbar og vi kan derivere L(lambda) mhp. lambda. Nå som vi har gradienten for L, kan vi maksimere L mhp. lambda, som svarer til å maksimere ELBO, og dermed minimere KL-distansen.
+
+Poeng: 6/8
+
+7a)
+
+Den ene utfordringen er at IRL er et ill-defined problem; det vil si at hva som er en korrekt reward function er vanskelig å definere, fordi det i komplekse environments ofte finnes flere måter for en agent å handle på som kan gi høy reward; det finnes altså mange gode handlingsmønstre, og ikke minst mange dårlige (som gir lav reward). En god reward function må gi passende reward for alle handlinger.
+
+Den andre utfordringen er at man må stole på expert demonstrations, fordi man i IRL antar at de demonstrerer en optimal policy. Dette er ikke nødvendigvis sant, og kan derfor gi modellen feilaktige oppfatninger av hva som er riktig å gjøre i miljøet.
+
+Poeng: 4/4
+
+7b)
+
+Generator i GAN svarer til policy i GAIL.
+Discriminator svarer til classifier.
+Real data samples = expert demonstrations.
+Fake data samples = robot attempt.
+G maksimerer p(x_fake) = policy maksimerer p(robot attempt).
+D maksimerer p(x_real) = classifier klassifiserer expert demonstration riktig.
+D minimaerer p(x_fake) = classifier klassifiserer robot attempt riktig.
+
+Poeng: 6/8
+
+8a)
+
+I et graph convolutional network svarer hvert punkt til en node. Gitt 100 punkter vil vi derfor ha 100 noder i et gitt layer.
+
+Poeng: 3/3
+
+8b)
+
+En slik approach tar ikke hensyn til interaksjon mellom lokale punkter (punkter nære hverandre).
+
+Poeng: 3/3
+
+8c)
+
+For å regne ut de første node og edge-featurene, og dermed kunne konstruere en grad, må man sende de allerede detekterte bounding box-ene fra bildene i t=1,2,3 gjennom CNNs for å danne appearance vectors v_i, som brukes som noder. De initielle edge-verdiene kan da regnes ut som kryssproduktet mellom nodene, så man får en geometry-vector som brukes som edge.
+
+Etter dette steget tar man kryssproduktet av alle nodene mellom hverandre i ett og ett timestep, og bruker dette til å regne appearance vectors i de neste timestepene. For å finne nye geometry vectors (edges) tar man igjen kryssproduktet mellom to og to noder.
+
+Poeng: 2/5
+
+8d)
+
+At nettverket er fully convolutional gjør at translasjoner i pixel domain korresponderer unikt til translasjoner i feature domain. Denne egenskapen er nødvendig for at nettverket skal få til tracking over flere timesteps, siden objektet som trackes jo vil kunne flytte på seg fra bilde til bilde.
+
+Poeng: 3/3
+
+_______________________
+
+Poengssum: 90/100
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

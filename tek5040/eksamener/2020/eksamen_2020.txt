@@ -1,0 +1,113 @@
+1)
+
+Se tegning. Etter 2 conv. layers har en piksel Field of View på 9x9 input-piksler.
+
+Poeng: 12/12
+
+2)
+
+En ulempe med med attention er at det krever at man holder states lagret for at de skal kunne "velges" både i soft og hard attention, altså kreves det stadig mer lagringsplass ettersom man går gjennom flere states. Dette gjelder riktignok også for vanlige RNNs, siden man må beholde state vectors for å kunne gjennomføre backpropagation gjennom dem. Men siden hver state vector brukes til sammenligning med nåværende state når man innfører attention, blir det også polynomielt flere regneoperasjoner ettersom antallet states stiger.
+
+Andre ulemper er at med attention, definerer man memory direkte som states, som ikke gir en generell layout (slik man f.eks. har med MANN). Å skrive til minnet svarer da til hver gang man genererer en state, og kan bare gjøres en gang (man kan f.eks. ikke skrive til samme minnelokasjon flere ganger slik man kan på en vanlig PC.
+
+Poeng: 12/12
+
+3)
+
+PPO bruker clip-operasjonen til å sørge for at policy ikke oppdaterer seg raskere enn hva som tolereres av epsilon-parameteren. Uten clip-operasjonen risikerer man at policyen oppdaterer seg så raskt at den f.eks. kan gjøre det veldig sannsynlig å velge kun en handling, slik at alle de andre blir usannsynlige å velge. Om denne handlingen viser seg å gi lav reward over mange iterasjoner, kan det likevel hende at policyen blir "fanget" i at handlingen er så sannsynlig å velges, at ingen andre handlinger som gir bedre reward blir valgt, og policyen får da ikke mulighet til å oppdatere for å velge andre handlinger i stedet. Dette forbedrer altså både stability ved at algoritmen ikke plutselig lærer veldig dårlige handlinger den ikke kan komme ut av, og sample efficiency ved at den mer jevnt over velger flere forskjellige handlinger (spesielt tidlig i læring), som gjør at den lærer mer jevnt om alle handlingene, og tidlig lærer et mer realistisk bilde av hvilke handlinger som er gode og dårlige.
+
+Poeng: 8/12
+
+4)
+
+Dersom vi hadde hatt bilder av samme menneske i forskjellige aldre, hadde vi kunnet brukt C-GAN, siden vi da hadde hatt en "fasit" for hvert input-bilde. Dette har vi ikke. Derimot kan vi si at bilder av alle mennesker innenfor en gitt alder/aldersgruppe (f.eks. 20-29 år, 30-39 osv.) hører til samme domene, selv om alle bildene er unpaired. Vi kan da trene CycleGANs for å ta et bilde fra et aldersdomene og lære hvordan det bildet oversettes til et annet for å få samme bilde slik det ville sett ut i et annet aldersdomene.
+
+Siden CycleGANs kun lærer mappingen mellom to domener, ville det vært nødvendig å trene CycleGANs mellom alle parene av domener, f.eks. en mellom 20-29 og 30-39, en mellom 20-29 og 60-69, osv.
+
+Poeng: 12/12
+
+5)
+
+Et eksempel på en meta learning-teknikk som bruker den objective functionen er Siamese Networks. I meta training-settet har man i et gitt Dsupport-sett N (x_i, y_i)-par, og i et gitt Dquery-sett har man ett (x, y)-par. Under trening lager man par av inputene fra Dsupport og Dquery (x_i, x), og trener en CNN til å embedde dem til et felles domene (hver av inputene får altså en egen embedding). I dette felles domenet måler man distanse mellom embeddingene, og bruker distansen som et mål på sannsynlighet for at x og x_i hører til samme klasse (begge to har labels i meta-training, så man kan sjekke dette). Nettverket trenes da med loss-funksjon som maksimerer sannsynlighet når x og x_i er av samme klasse, og minimerer den når de er av forskjellige klasser.
+
+I meta-testing lager man også tilsvarende (x, x_i)-par, men x fra Dquery har ikke en tilhørende label. Her velger man bare klassen tilhørende den x_i-en som gir høyest sannsynlighet. 
+
+Som begrunnet i avsnittet om meta-training, er Siamese Networks et tilfelle av å bruke den gitte objective functionen i oppgaven fordi nettverket trenes for å maksimere sannsynligheten for den klassen y vi klassifiserer x fra Dquery som, gitt eksemplene nettverket har blitt vist fra Dsupport. Siden dette gjøres for alle par av query- og support-sett, slik formelen sier, følger Siamese Networks objective functionen som gitt.
+
+Poeng: 12/12
+
+6a)
+
+Hovedgrunnen til at ELBO er lettere å jobbe med enn KL-divergens, er at KL-divergens bruker p(w|D), og dette er en tetthetsfunksjon vi ikke kjenner. Derimot kan vi regne p(w, D) enkelt, som gjøres for å regne ut ELBO. Siden vi har ligningen som gitt, ser vi at å maksimere ELBO er ekvivalent med å minimere KL-divergensen, og vi kan derfor gjøre det i stedet.
+
+Poeng: 4/4
+
+6b)
+
+Paul ville ikke lyktes fordi man ikke kan derivere L_hatt(lambda) mhp. lambda, fordi den ikke er en smooth funksjon av lambda (sampling er ikke en derierbar operasjon). I stedet burde han bruke re-parameterization trick (w^s = w(lambda, epsilon^s)), hvor epsilon er samplet fra N(0,1) (standard normalfordelt). Når man nå setter inn dette for w^s i formelen for L_hatt, blir L_hatt deriverbar mhp. lambda, og man kan videre optimere mhp. lambda ved hjelp av gradient descent.
+
+Poeng: 8/8
+
+7)
+
+Compounding errors kan skje som følge av at roboten møter en state den ikke har sett eller lært å handle i før. Dens handlinger kan da bli fullstendig uforutsigbare, og ikke basert på læring. En måte å motvirke dette er å bruke nettopp reinforcement learning, fordi metodikken tar hensyn til at en agent ikke kjenner hele sitt environment og alle mulige states til å begynne med. Utfordringer med RL i denne sammenhengen er at det tar mye tid å trene, og den må feile mange ganger for å skjønne hvilke handlinger som er dårlige. Det siste spesielt kan være veldig kostbart dersom man må trene en robot i et ekte miljø for å lære gode handlinger. I tillegg antas det i vanlig RL at miljøet har en kjent reward function, men dette er ikke tilfelle for roboter i ekte miljøer; vi må lage funksjonen selv, som får oss over i neste problem, Complex reward functions.
+
+Siden vi selv må lage reward functions, oppstår et problem fra at miljøet (den ekte verden) er svært komplekst, og å lage en passende reward function manuelt blir derfor veldig vanskelig. I tillegg til å utnytte RL, ønsker vi derfor å benytte oss av expert demonstrations og/eller control theory. Det finnes mange alternativer for dette; for å kombinere control theory med RL kan man brule GPS (Guided Policy Search). Man kan også kombinere expert demonstrations med RL, gjennom det som heter Inverse Reinforcement Learning, eller lignende alternativer som Guided Cost Learning og Generative Adversarial Imitation Learning. Noen ulemper med spesielt IRL er at ekspertdemonstrasjoner ikke alltid tilsvarer optimale policies, men man må anta det i metodikken. I tillegg er det å definere reward functions et ill-defined problem, fordi det finnes mange forskjellige måter å få god reward på (det er ikke alltid bare en handling som gir god reward), men ekspertdemonstrasjonene gir oss jo bare ett eksempel på god handling per demonstrasjon.
+
+Som også nevnt i første avsnitt, kan det være kostbart å utforske i ukjente miljøer, spesielt når miljøet inneholder farlige elementer som kan skade agenten i et ekte miljø. Dette motvirkes også ved bruk av expert demonstrations, enten ved imitation learning kun basert på demonstrasjoner, eller kombinert med RL i form av IRL.
+
+Poeng: 10/12
+
+8a)
+
+I vanlig konvolusjon (gjerne av 2D-bilder) har man likevel 3D-inputs og 3D-filtre. Dette er fordi fargebilder i 2D har channels; hver piksel holder på en vektor med f.eks. RGB-verdier. Disse channelene visualiseres gjerne som 3D layers, og tilsvarende visualiseres konvolusjonsfiltrene som flere layers av 2D-filtre, som til sammen utgjør 3 dimensjoner. Merk likevel at outputen av vanlig konvolusjon for ett enkelt filter er 2-dimensjonal, fordi konvolusjonsfilteret outputter den aggregerte verdien over alle kanalene. Antallet channels som outputtes av 2D-konvolusjon, er bare så mange 2D-filtre som ble brukt til å konvolvere med.
+
+Denne aggregeringen illustrerer forskjellen; når en vektor av data er plassert på et punkt, er ikke egentlig disse dataene romlig fordelt på forskjellige plasser. Derimot er voxels i et 3D-rom romlig fordelt på forskjellige plasser i 3D-rommet, og ett 3D-filter outputter en 3D-voxel etter en 3D-konvolusjon. Hver voxel kan også holde så mange channels som ønskelig, akkurat som i 2D-konvolusjon (f.eks. RGB-verdier). Men disse verdiene aggregeres over akkurat som i 2D-konvolusjon, og ett 3D-filter outputter bare ett 3D feature map (hele konvolusjonen outputter et 3D feature map per filter som ble brukt).
+
+Poeng: 3/3
+
+8b)
+
+Hvert punkt i en gitt punktsky er en 1x3-vektor, og hele punktskyen av 100 punkter er da en 100x3-matrise. Om MLP-en bare tar inn en av disse 1x3-vektorene, vil den altså outputte en 1x256-vektor, som beskrevet i oppgaven. Om den tar inn en 100x3-matrise, vil den altså outputte en 100x256-matrise, tilsvarende en 256-vektor per input-vektor som matrisen består av.
+
+Poeng: 3/3
+
+8c)
+
+Siden alle punktene hører til samme klasse (hver punktsky representerer en klasse), kan han kombinere alle outputtene med en symmetrisk funksjon, som f.eks. max-pooling. Denne representasjonen bør også kunne brukes til å klassifisere punktskyen.
+
+Poeng: 3/3
+
+8d)
+
+Man kan forbedre robustheten mot geometriske transformasjoner ved å ta i bruk det fulle Spacial Transformer Networket. I tillegg til MLP + symmetrisk funksjon (max pooling), har STN en egen modul som trenes til å overføre forskjellige geometriske transformasjoner til samme domene, slik at de blir "rettet opp".
+
+Poeng: 3/3
+
+8e)
+
+SiamFC bør være direkte kompatibel med 3D-konvolusjon, ganske enkelt ved å gjøre 2D-filtrene brukt i konvolusjon om til 3D-filtere. Da kan man sende inn Target Image og Search Image som 3D-bilder, og man vil stå igjen med to 3D feature maps etter at hver av dem har gått gjennom sin CNN, i stedet for to 2D feature maps. Etter den siste konvolusjonen hvor disse to feature map-ene sendes som input, vil man kunne få et tredimensjonalt score map, som kan brukes helt analogt til et todimensjonalt et.
+
+Poeng: 3/4
+
+___________________________
+
+Poengssum: 93/100
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

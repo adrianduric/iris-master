@@ -1,0 +1,148 @@
+1)
+
+Se tegning. k = 4.
+
+Poeng: 12/12.
+
+2)
+
+Vi får output-sekvensen z2, z3, z1. Dette er fordi value-vektoren vi som korresponderer til inputen xi bytter plass sammen med xi, og gir opphav til hva zi blir (det er vi som blir ganget med kryssproduktet av alle kombinasjonene av qi*kj).
+
+En måte å motvirke ulempen er ved å ikke bruke alle inputene til å beregne hver output, men la hver output "se" et vindu av de k nærmeste inputene. Kompleksiteten går da fra O(n^2) til O(k*n), hvor k<n. Ulempen med dette er at man da mister litt av fordelen med self-attention, nemlig at outputen på en plass ikke lenger har muligheten til å bli påvirket av alle inputene; man får mindre attention.
+
+Poeng: 12/12.
+
+3)
+
+Det går ikke an for studenten å beregne gradienten av R(tau) mhp. theta, fordi han da hadde måttet derivere en sampling-operasjon, som jo er ikke-deriverbar.
+
+Gitt at vi definerer loss som noe vi ønsker å minimere, vil loss være negativ forventet reward, L = - J(theta). Vi kan også ekvivalent si at vi vil maksimere J(theta), som sagt i oppgaven. Vi oppdaterer uansett theta som theta_k+1 = theta_k + eta * gradienten av J(theta_k).
+
+Policyen er den delen av J(theta) som endres siden policyen er deriverbar mhp. theta. Ved å endre parametrene i samme retning som gradienten, øker vi sannsynlighetene for de handlingene som gir høyere forventet return, og senker sanns. for de som gir lavere forventet return. Det tilsvarende mtp. CE loss i supervised learning er sannsynligheter for at en input hører til en definert klasse.
+
+Poeng: 11/14
+
+4)
+
+Når man har labelled inputs (x, c), passer en C-GAN godt til å generere flere instanser av x gitt condition c. Her er x bildene, f.eks. av biler, og c er den tilhørende word vectoren, som f.eks. representerer "car". Da kan man gi generatoren G input (z, c) der z er tilfeldig støy, så den genererer falsk data x' som i vanlige GANs, men som da vil høre til conditionen c. Diskriminatoren D tar inn (x, c) der x er enten ekte x eller falsk x', og lærer å skille de to. Derfra fungerer læringen som i en vanlig GAN.
+
+Fordi conditionen c sendes inn med støyen til generatoren og diskriminatoren, vil nettverket kunne lære å generere annerledes data avhengig av hvilken c som sendes inn.
+
+En DDM klarer generelt å oppnå mer diversity, altså mer variasjon i outputen enn det en GAN klarer. Riktignok har den ikke like rask sampling.
+
+Poeng: 8/8
+
+5a)
+
+One/few shot learning innebærer at man er gitt et support set av nye klasser, og skal lære å klassifisere en test-input. I k-class n-shot learning er man da gitt k klasser, og n eksempler per klasse i support-settet.
+
+Et eksempel på 5-class 1-shot learning kan være at man har ett labelled bilde hver av en sykkel, bil, tog, buss og båt, og har et annet unlabelled bilde tilhørende en av disse klassene som man ønsker å klassifisere (for hensikten å måle performance av nettverket kan dette så klart også ha label, men under inferens later man som at man ikke kjenner den). Dette utgjør vårt meta-testing set; de fem labelled bildene er support, og det unlabelled bildet er query.
+
+For å trene nettverket trenger vi også et meta-training set. Her kan vi ha mange par av support- og query-sett. I hvert support set vil du da ha 5 labelled bilder der hvert bilde også tilhører sin egen klasse (altså har vi her også 5-class 1-shot). Forskjellen fra meta-testing support er at disse 5 klassene er helt andre klasser enn i testing; test-klassene skal være usette for nettverket. Det kan for eksempel være bilder av 5 forskjellige dyr, eller 5 forskjellige typer kjøkkenredskaper.
+
+I det tilhørende meta-training query-settet har vi ett labelled bilde som tilhører en av de 5 definerte klassene i det tilhørende support-settet. Forskjellen fra testing er at her bruker vi aktivt labellen for å trene nettverket, ved å sjekke om nettverket velger riktig klasse på query-bildet, og oppdatere nettverket basert på det.
+
+Poeng: 10/10
+
+b)
+
+Active learning går ut på å aktivt selektere de "beste" samplene til å basere læringen på.Generelt er de mest verdifulle samplene de som er vanskeligst å klassifisere til en gitt tid. Dette kan man måle på forskjellige måter, f.eks. med konfidens, varians, osv.
+
+Poeng: 2/2
+
+6a)
+
+Varians kan være et essensielt mål mtp. feiltoleranse i sikkerhetskritiske applikasjoner. F.eks. gir det et mål på hvor sikker man er på en prediksjon, som trengs når man ønsker å kjenne feilmarginen til en gitt prediksjon.
+
+Grunnen til at integralet I er vanskelig å evaluere, er fordi p(w|D) ofte ikke er mulig å evaluere analytisk. Derfor trengs numerisk evaluering, men også dette blir svært vanskelig selv med et relativt lite antall parametre. Dette er fordi antallet vekt-vektorer øker eksponensielt med antall parametre, så utregningen blir for stor.
+
+Poeng: 6/6
+
+b)
+
+Integralet som skal regnes er egentlig KL-distansen mellom p(w|D) og vårt estimat q(w). Vi kan skrive om integralet til en ligning som gir oss et ledd som heter ELBO. Likningen blir slik at ved å maksimere ELBO, minimerer vi KL-distansen. ELBO er verdifullt fordi det ikke inneholder p(w|D), så det er lettere å regne på.
+
+En måte å gå videre på er å approksimere ELBO som en funksjon L(lambda) der lambda er en parametervektor, og derivere L mhp. lambda for å så kunne maksimere den. Men approksimeringen innebærer sampling av w, som ikke er en deriverbar funksjon. Vi bruker derfor reparametriseringstrikset w^s = w(lambda, epsilon^s) der epsilon er samplet fra standardnormalfordelingen til å skrive om L(lambda) slik at funksjonen blir deriverbar. Når dette er gjort kan man derivere den, og derfra kan man finne optimal lambda, og dermed optimal q(w, lambda), vha. gradient descent.
+
+Poeng: 5/6
+
+7a)
+
+L(psi) = sum (tau inneholdt i D) (log p_r_psi(tau)). Denne skal maksimeres.
+
+Poeng: 4/8
+
+b)
+
+En svakhet med behavior cloning er compounding errors: Hvis agenten først havner i en state den ikke har sett før, har den ikke noe grunnlag til å vite hva den skal gjøre. Dette er fordi den blindt forsøker å imitere ekspertdemonstrasjonene, og de reflekterer ikke hele virkeligheten.
+
+En annen svakhet er at behavior cloning er avhengig av at ekspertdemonstrasjonene er riktige, siden disse utgjør grunnlaget for oppførselen nettverket vil imitere. Det er ikke nødvendigvis tilfelle, og da kan robotene lære en uhensiktsmessig behavior.
+
+Argumenter for reinforcement learning:
+
+1) I motsetning til f.eks. behavior cloning tar RL hensyn til at agenten kan havne i ukjente states. Metodikken er designet for å lære å handle i alle states ettersom man kommer over dem.
+
+2) Reinforcement learning lar seg kombinere med kontrollteori og ekspertdemonstrasjoner. På den måten kan man bruke RL til å trene en agent til å bli autonom, samtidig som man bruker domenekunnskap til å tidlig lære den fornuftige handlinger.
+
+Argumenter mot:
+
+1) Læring skjer mest gjennom prøving og feiling. Dette tar lang tid, og kan være spesielt kostbart i virkelige omgivelser hvor det kan eksistere farer for agenten.
+
+2) En passende reward function trengs, men denne er ikke gitt i virkeligheten. Man må designe den til å ligne på virkeligheten så godt som mulig, og siden virkeligheten er svært kompleks, blir det også svært vanskelig å lage en slik funksjon manuelt. Merk at i vanlig RL antar man at en riktig reward function er gitt.
+
+Poeng: 8/8
+
+8a)
+
+Antagelig 1x4.
+
+Poeng: 3/3
+
+b)
+
+Ulempen i det første tilfellet er at man mister lokalitet - aggregeringen tar bare hensyn til noden man er på, og hver node får ingen informasjon om nabonodene.
+
+I det andre tilfellet tar man i stedet bare hensyn til naboene, og mister informasjon om noden man er på.
+
+Poeng: 4/4
+
+c)
+
+Initielle node features er representasjoner av bounded box-ene som har blitt detektert i hvert bilde, og edge features er et mål på likhet mellom disse boksene. De er ikke nødvendig i G_s fordi man der ikke prøver å måle assosiasjoner mellom noder, mens man gjør det i G_t.
+
+Poeng: 2/4
+
+d)
+
+Det er raskere pga. effektiv matching, og man trenger ikke trene nettverket på nytt ved testing, altså i tracking.
+
+Poeng: 3/3
+
+________________________________
+
+Poengssum: 90/100
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
