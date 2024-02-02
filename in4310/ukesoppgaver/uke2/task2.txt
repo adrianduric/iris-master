@@ -1,0 +1,17 @@
+For at to n-dimensjonale arrays skal være kompatible for broadcasting må de ha like mange dimensjoner, eller den korteste arrayen kan prependes med lengde 1 i hver manglende dimensjon. I tillegg må de ha samme lengde i hver dimensjon, eller en av dem må ha lengde 1 i den dimensjonen så den kan utvides.
+
+(3, 1, 3) og (2, 3, 3) er ikke kompatible, for de har lengde 3 og 2 i første dimensjon.
+
+(4,1) og (3,1,1,5) er kompatible; (4,1) kan broadcastes til (1,1,4,1) og deretter kan begge broadcastes til (3,1,4,5).
+
+(3), (3,1,1,5) er ikke kompatible; 3 og 5 er ulike og ikke lik 1.
+
+(1,4) og (7,1) --> (7, 4)
+
+(6,3,1,7), (2,7) --> (6,3,2,7)
+
+(6,3,1,7), (2,1,7) ukompatible.
+
+(1,2,3,1,6), (8,1,3,2,6) --> (8,2,3,2,6)
+
+(2,5,1,7), (9,2,3,2,1) ukompatible.
