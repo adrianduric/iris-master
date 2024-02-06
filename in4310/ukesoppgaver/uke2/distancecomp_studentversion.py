@@ -10,19 +10,37 @@ def forloopdists(feats,protos):
 
   for i in range(feats.shape[0]):
       for j in range(protos.shape[0]):
-          dists[i, j] = np.square(np.linalg.norm(feats[i, :] - protos[j, :]))
+          diff = feats[i, :] - protos[j, :]
+          dists[i, j] = np.dot(diff, diff)
 
   return dists
 
 def numpydists(feats,protos):
   
-  return feats @ protos.T
-  
+  feats_expanded = feats.reshape(-1, 1, 300)
+  protos_expanded = protos.reshape(1, -1, 300)
+  # feats_expanded = feats[:, np.newaxis, :]
+  # protos_expanded = protos[np.newaxis, :, :]
+
+  diff = feats_expanded - protos_expanded
+  # sq_norm = np.square(np.linalg.norm(diff, axis=2))
+  sq_norm = np.einsum("ijk, ijk -> ij", diff, diff)
+
+  return sq_norm
+
 def pytorchdists(feats0,protos0,device):
   
-  feats = torch.Tensor(feats0)
-  protos = torch.Tensor(protos0)
-  return feats @ protos.T
+  feats = torch.tensor(feats0)
+  protos = torch.tensor(protos0)
+
+  feats_expanded = feats.reshape(-1, 1, 300)
+  protos_expanded = protos.reshape(1, -1, 300)
+
+  diff = feats_expanded - protos_expanded
+  # sq_norm = torch.square(torch.linalg.vector_norm(diff, dim=2))
+  sq_norm = torch.einsum("ijk, ijk -> ij", diff, diff)
+
+  return sq_norm
 
 def run():
 
@@ -31,7 +49,7 @@ def run():
   ## if you have less than 8 gbyte, then reduce from 250k
   ##
   ###############
-  feats=np.random.normal(size=(250000,300)) #5000 instead of 250k for forloopdists
+  feats=np.random.normal(size=(5000,300)) #5000 instead of 250k for forloopdists
   protos=np.random.normal(size=(500,300))
 
 
@@ -39,6 +57,7 @@ def run():
   dists0=forloopdists(feats,protos)
   time_elapsed=float(time.time()) - float(since)
   print('Comp complete in {:.3f}s'.format( time_elapsed ))
+  print(dists0.shape)
 
 
   device=torch.device('cpu')
@@ -52,7 +71,7 @@ def run():
   print('Comp complete in {:.3f}s'.format( time_elapsed ))
   print(dists1.shape)
 
-  print('df0',np.max(np.abs(dists1-dists0)))
+  print('df0',np.max(np.abs(dists1.numpy() - dists0)))
 
 
   since = time.time()
@@ -68,6 +87,7 @@ def run():
 
   print('df',np.max(np.abs(dists1.numpy() - dists2)))
 
+  print("np vs loop", np.max(np.abs(dists0 - dists2)))
 
 if __name__=='__main__':
   run()
