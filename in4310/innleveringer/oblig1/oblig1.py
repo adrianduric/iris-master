@@ -1,53 +1,84 @@
 import os
 import numpy as np
-from PIL import Image
-from sklearn.model_selection import StratifiedShuffleSplit
+import torch
+from torch.utils.data import Dataset, DataLoader
+from torchvision import transforms
+from torchvision.io import read_image
+from torchvision.models import resnet50, ResNet50_Weights
+from sklearn.model_selection import train_test_split
+
+# Setting random seed for testing
+RANDOM_SEED = 77
+torch.manual_seed(RANDOM_SEED)
 
 # Task 1a)
 # Setting X and y as features and targets
+images_dir = "mandatory1_data"
+
 X = []
 y = []
 
-images_dir = "mandatory1_data"
-
 for label_dir, _, filenames in os.walk(images_dir):
-    label = label_dir
+    label = os.path.basename(label_dir)
 
     for filename in filenames:
         file_path = os.path.join(label_dir, filename)
-        img = Image.open(file_path)
         
-        X.append(np.array(img))
+        X.append(file_path)
         y.append(label)
 
 # Performing split of dataset
 # First splitting test set and the rest
 TEST_PORTION = 3000/len(X) # splits approx. 3000 of features to test set
-sss = StratifiedShuffleSplit(n_splits=1, test_size=TEST_PORTION)
-
-for temp_index, test_index in sss.split(X, y):
-    X_temp, y_temp = [X[i] for i in temp_index], [y[i] for i in temp_index]
-    X_test, y_test = [X[i] for i in test_index], [y[i] for i in test_index]
+X_temp, X_test, y_temp, y_test = train_test_split(X, y, test_size=TEST_PORTION, random_state=RANDOM_SEED, stratify=y)
 
 # Then splitting training and validation sets
 VAL_PORTION = 2000/len(X_temp) # approx. 2000 features in validation set
-sss = StratifiedShuffleSplit(n_splits=1, test_size=VAL_PORTION)
-
-for train_index, val_index in sss.split(X_temp, y_temp):
-    X_train, y_train = [X_temp[i] for i in train_index], [y_temp[i] for i in train_index]
-    X_val, y_val = [X_temp[i] for i in val_index], [y_temp[i] for i in val_index]
+X_train, X_val, y_train, y_val = train_test_split(X_temp, y_temp, test_size=VAL_PORTION, random_state=RANDOM_SEED, stratify=y_temp)
 
 # Asserting that sets are disjointed
-assert set(train_index).isdisjoint(set(val_index))
-assert set(train_index).isdisjoint(set(test_index))
-assert set(val_index).isdisjoint(set(test_index))
+assert set(X_train).isdisjoint(set(X_val))
+assert set(X_train).isdisjoint(set(X_test))
+assert set(X_val).isdisjoint(set(X_test))
 
+# Task 1b)
+# Creating Dataset class for image files
+class ImageDataset(Dataset):
+    def __init__(self, img_paths, img_labels):
+        self.img_paths = img_paths
+        self.img_labels = img_labels
+        self.transform = transforms.Compose([
+    transforms.Resize(256),
+    transforms.CenterCrop(224),
+    transforms.ToTensor(),
+    transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+    ]) # Transforms for ResNet: https://pytorch.org/hub/pytorch_vision_resnet/
 
+    def __len__(self):
+        return len(self.img_labels)
 
+    def __getitem__(self, idx):
+        image = read_image(self.img_paths[idx])
+        label = img_labels[idx]
+        image = self.transform(image)
+        return image, label
 
+# Creating Datasets and DataLoaders
+train_dataset = ImageDataset(X_train, y_train)
+val_dataset = ImageDataset(X_val, y_val)
+test_dataset = ImageDataset(X_test, y_test)
 
+train_dataloader = DataLoader(train_dataset, batch_size=16, shuffle=True)
+val_dataloader = DataLoader(val_dataset, batch_size=16, shuffle=True)
+test_dataloader = DataLoader(test_dataset, batch_size=16, shuffle=True)
 
+# Task 1c)
+# Loading ResNet50 pretrained with weights
+weights = ResNet50_Weights.DEFAULT
+model = resnet50(weights=weights)
 
+# Choosing CrossEntropyLoss as loss function
+loss_fn = nn.CrossEntropyLoss()
 
 
 
