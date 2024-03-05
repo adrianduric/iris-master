@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from PIL import Image
-from getimagenetclasses import parseclasslabel, parsesynsetwords, get_classes
+from imagenet_first2500.getimagenetclasses import parseclasslabel, parsesynsetwords, get_classes
 # Try other models https://pytorch.org/vision/stable/models.html
 from torchvision.models import resnet18
 
@@ -50,14 +50,13 @@ class ImageNet2500(Dataset):
         return f
 
     def __len__(self):
-        # todo: return the number of samples in the dataset
-        pass
+        return len(self.imgfilenames)
 
     def __getitem__(self, idx):
-        #  todo: load the image of index idx, transform it using the appropriate transforms and return it along with its
-        #  label
-        pass
-
+        img = Image.open(self.imgfilenames[idx])
+        if self.transform:
+            image = self.transform(image)
+        return img, self.labels[idx]
 
 def run_model(model, dataloader):
     pred = torch.Tensor()
@@ -117,7 +116,8 @@ if __name__ == "__main__":
 
     #  https://pytorch.org/vision/main/generated/torchvision.transforms.Compose.html
     base_transform = transforms.Compose([
-        #  use the appropriate transforms
+        transforms.Resize(224),
+        transforms.CenterCrop((224, 224))
     ])
 
     normalize_transform = transforms.Compose([
