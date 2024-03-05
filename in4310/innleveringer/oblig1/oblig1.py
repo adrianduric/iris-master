@@ -1,6 +1,9 @@
 import os
 import numpy as np
+import matplotlib.pyplot as plt
 import torch
+import torch.nn as nn
+from PIL import Image
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from torchvision.io import read_image
@@ -11,6 +14,11 @@ from sklearn.model_selection import train_test_split
 RANDOM_SEED = 77
 torch.manual_seed(RANDOM_SEED)
 
+# Setting hyperparameters
+LEARNING_RATE = 1e-3
+BATCH_SIZE = 16
+EPOCHS = 5
+
 # Task 1a)
 # Setting X and y as features and targets
 images_dir = "mandatory1_data"
@@ -18,8 +26,9 @@ images_dir = "mandatory1_data"
 X = []
 y = []
 
+i = 0
 for label_dir, _, filenames in os.walk(images_dir):
-    label = os.path.basename(label_dir)
+    label = i
 
     for filename in filenames:
         file_path = os.path.join(label_dir, filename)
@@ -58,8 +67,8 @@ class ImageDataset(Dataset):
         return len(self.img_labels)
 
     def __getitem__(self, idx):
-        image = read_image(self.img_paths[idx])
-        label = img_labels[idx]
+        image = Image.open(self.img_paths[idx])
+        label = self.img_labels[idx]
         image = self.transform(image)
         return image, label
 
@@ -68,9 +77,9 @@ train_dataset = ImageDataset(X_train, y_train)
 val_dataset = ImageDataset(X_val, y_val)
 test_dataset = ImageDataset(X_test, y_test)
 
-train_dataloader = DataLoader(train_dataset, batch_size=16, shuffle=True)
-val_dataloader = DataLoader(val_dataset, batch_size=16, shuffle=True)
-test_dataloader = DataLoader(test_dataset, batch_size=16, shuffle=True)
+train_dataloader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
+val_dataloader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=True)
+test_dataloader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=True)
 
 # Task 1c)
 # Loading ResNet50 pretrained with weights
@@ -80,8 +89,49 @@ model = resnet50(weights=weights)
 # Choosing CrossEntropyLoss as loss function
 loss_fn = nn.CrossEntropyLoss()
 
+# Choosing Adam as optimizer
+optimizer = torch.optim.Adam(model.parameters())
 
 
+def train_loop(dataloader, model, loss_fn, optimizer):
+    size = len(dataloader.dataset)
+    model.train()
+    for batch, (X, y) in enumerate(dataloader):
+        # Compute prediction and loss
+        pred = model(X)
+        loss = loss_fn(pred, y)
+
+        # Backpropagation
+        loss.backward()
+        optimizer.step()
+        optimizer.zero_grad()
+
+        if batch % 100 == 0:
+            loss, current = loss.item(), batch * BATCH_SIZE + len(X)
+            print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
+
+
+def test_loop(dataloader, model, loss_fn):
+    model.eval()
+    size = len(dataloader.dataset)
+    num_batches = len(dataloader)
+    test_loss, correct = 0, 0
+
+    with torch.no_grad():
+        for X, y in dataloader:
+            pred = model(X)
+            test_loss += loss_fn(pred, y).item()
+            correct += (pred.argmax(1) == y).type(torch.float).sum().item()
+
+    test_loss /= num_batches
+    correct /= size
+    print(f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
+
+for t in range(EPOCHS):
+    print(f"Epoch {t+1}\n-------------------------------")
+    train_loop(train_dataloader, model, loss_fn, optimizer)
+    test_loop(test_dataloader, model, loss_fn)
+print("Done!")
 
 
 
