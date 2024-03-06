@@ -7,7 +7,8 @@ from PIL import Image
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from torchvision.io import read_image
-from torchvision.models import resnet50, ResNet50_Weights
+from torchvision.models import resnet18, ResNet18_Weights
+from sklearn.metrics import accuracy_score, average_precision_score
 from sklearn.model_selection import train_test_split
 
 # Setting random seed for testing
@@ -15,40 +16,45 @@ RANDOM_SEED = 77
 torch.manual_seed(RANDOM_SEED)
 
 # Setting hyperparameters
-LEARNING_RATE = 1e-3
-BATCH_SIZE = 16
-EPOCHS = 5
+config = {
+          'batch_size': 16,
+          'use_cuda': True,
+          'epochs': 10,
+          'learningRate': 1e-3
+         }
 
 # Task 1a)
-# Setting X and y as features and targets
+# Storing paths to images and corresponding labels
+root_dir = "/home/adrian/iris-master/in4310/innleveringer/oblig1"
 images_dir = "mandatory1_data"
 
-X = []
-y = []
+img_paths = []
+img_labels = []
 
 i = 0
-for label_dir, _, filenames in os.walk(images_dir):
+for label_dir, _, filenames in os.walk(os.path.join(root_dir, images_dir)):
     label = i
 
     for filename in filenames:
         file_path = os.path.join(label_dir, filename)
         
-        X.append(file_path)
-        y.append(label)
+        img_paths.append(file_path)
+        img_labels.append(label)
 
 # Performing split of dataset
 # First splitting test set and the rest
-TEST_PORTION = 3000/len(X) # splits approx. 3000 of features to test set
-X_temp, X_test, y_temp, y_test = train_test_split(X, y, test_size=TEST_PORTION, random_state=RANDOM_SEED, stratify=y)
+TEST_PORTION = 3000/len(img_paths) # splits approx. 3000 of features to test set
+img_paths_temp, img_paths_test, img_labels_temp, img_labels_test = train_test_split(img_paths, img_labels, test_size=TEST_PORTION, stratify=img_labels)
 
 # Then splitting training and validation sets
-VAL_PORTION = 2000/len(X_temp) # approx. 2000 features in validation set
-X_train, X_val, y_train, y_val = train_test_split(X_temp, y_temp, test_size=VAL_PORTION, random_state=RANDOM_SEED, stratify=y_temp)
+VAL_PORTION = 2000/len(img_paths_temp) # approx. 2000 features in validation set
+img_paths_train, img_paths_val, img_labels_train, img_labels_val = train_test_split(img_paths_temp, img_labels_temp, test_size=VAL_PORTION, stratify=img_labels_temp)
 
-# Asserting that sets are disjointed
-assert set(X_train).isdisjoint(set(X_val))
-assert set(X_train).isdisjoint(set(X_test))
-assert set(X_val).isdisjoint(set(X_test))
+# Asserting that sets are disjoint
+assert set(img_paths_train).isdisjoint(set(img_paths_val))
+assert set(img_paths_train).isdisjoint(set(img_paths_test))
+assert set(img_paths_val).isdisjoint(set(img_paths_test))
+
 
 # Task 1b)
 # Creating Dataset class for image files
@@ -56,12 +62,13 @@ class ImageDataset(Dataset):
     def __init__(self, img_paths, img_labels):
         self.img_paths = img_paths
         self.img_labels = img_labels
-        self.transform = transforms.Compose([
-            transforms.Resize(256),
-            transforms.CenterCrop(224),
-            transforms.ToTensor(),
-            transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        ]) # Transforms for ResNet: https://pytorch.org/hub/pytorch_vision_resnet/
+        self.transform = ResNet18_Weights.DEFAULT.transforms()
+        # self.transform = transforms.Compose([
+        #     transforms.Resize(256),
+        #     transforms.CenterCrop(224),
+        #     transforms.ToTensor(),
+        #     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
+        # ])
 
     def __len__(self):
         return len(self.img_labels)
@@ -73,18 +80,19 @@ class ImageDataset(Dataset):
         return image, label
 
 # Creating Datasets and DataLoaders
-train_dataset = ImageDataset(X_train, y_train)
-val_dataset = ImageDataset(X_val, y_val)
-test_dataset = ImageDataset(X_test, y_test)
+train_dataset = ImageDataset(img_paths_train, img_labels_train)
+val_dataset = ImageDataset(img_paths_val, img_labels_val)
+test_dataset = ImageDataset(img_paths_test, img_labels_test)
 
-train_dataloader = DataLoader(train_dataset, batch_size=BATCH_SIZE, shuffle=True)
-val_dataloader = DataLoader(val_dataset, batch_size=BATCH_SIZE, shuffle=True)
-test_dataloader = DataLoader(test_dataset, batch_size=BATCH_SIZE, shuffle=True)
+train_dataloader = DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True)
+val_dataloader = DataLoader(val_dataset, batch_size=config["batch_size"], shuffle=True)
+test_dataloader = DataLoader(test_dataset, batch_size=config["batch_size"], shuffle=True)
+
 
 # Task 1c)
-# Loading ResNet50 pretrained with weights
-weights = ResNet50_Weights.DEFAULT
-model = resnet50(weights=weights)
+# Loading ResNet18 pretrained with weights
+weights = ResNet18_Weights.DEFAULT
+model = resnet18(weights=weights)
 
 # Choosing CrossEntropyLoss as loss function
 loss_fn = nn.CrossEntropyLoss()
@@ -93,45 +101,38 @@ loss_fn = nn.CrossEntropyLoss()
 optimizer = torch.optim.Adam(model.parameters())
 
 
-def train_loop(dataloader, model, loss_fn, optimizer):
-    size = len(dataloader.dataset)
-    model.train()
-    for batch, (X, y) in enumerate(dataloader):
-        # Compute prediction and loss
-        pred = model(X)
-        loss = loss_fn(pred, y)
+# Task 1e)
+# Code to run model in training and inference
+def run_model(model, dataloader, is_training=False):
+    all_predictions = torch.Tensor()
+    all_labels = torch.Tensor()
 
-        # Backpropagation
-        loss.backward()
-        optimizer.step()
-        optimizer.zero_grad()
+    for batch_idx, (batch_images, batch_labels) in enumerate(dataloader):
+        if not is_training:
+            with torch.no_grad():
+                batch_predictions = model(batch_images)
+                all_predictions = torch.cat((all_predictions, batch_predictions), 0)
+                all_labels = torch.cat((all_labels, batch_labels), 0)
 
-        if batch % 100 == 0:
-            loss, current = loss.item(), batch * BATCH_SIZE + len(X)
-            print(f"loss: {loss:>7f}  [{current:>5d}/{size:>5d}]")
+        elif is_training:
+            batch_predictions  = model(batch_images)
+            loss = loss_fn(batch_predictions, batch_labels)
+
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+
+    # Task 1d)
+    # Calculating performance metrics
+    if not is_training:
+        accuracy = accuracy_score(all_labels, all_predictions)
+        ap_score = average_precision_score(all_labels, all_predictions, average="micro")
+        mean_ap_score = average_precision_score(all_labels, all_predictions, average="macro")
+
+for e in range(config["epochs"]):
+    run_model(model, train_dataloader, is_training=True)
 
 
-def test_loop(dataloader, model, loss_fn):
-    model.eval()
-    size = len(dataloader.dataset)
-    num_batches = len(dataloader)
-    test_loss, correct = 0, 0
-
-    with torch.no_grad():
-        for X, y in dataloader:
-            pred = model(X)
-            test_loss += loss_fn(pred, y).item()
-            correct += (pred.argmax(1) == y).type(torch.float).sum().item()
-
-    test_loss /= num_batches
-    correct /= size
-    print(f"Test Error: \n Accuracy: {(100*correct):>0.1f}%, Avg loss: {test_loss:>8f} \n")
-
-for t in range(EPOCHS):
-    print(f"Epoch {t+1}\n-------------------------------")
-    train_loop(train_dataloader, model, loss_fn, optimizer)
-    test_loop(test_dataloader, model, loss_fn)
-print("Done!")
 
 
 
