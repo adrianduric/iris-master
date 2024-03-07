@@ -26,7 +26,7 @@ config = {
 
 # Task 1a)
 # Storing paths to images and corresponding labels
-root_dir = "/itf-fi-ml/shared/courses/IN3310"
+root_dir = "~/iris-master/in4310/innleveringer/oblig1"
 images_dir = "mandatory1_data"
 
 img_paths = []
@@ -35,6 +35,7 @@ img_labels = []
 i = 0
 for label_dir, _, filenames in os.walk(os.path.join(root_dir, images_dir)):
     label = i
+    print(label_dir)
 
     for filename in filenames:
         file_path = os.path.join(label_dir, filename)
