@@ -10,6 +10,7 @@ from torchvision.io import read_image
 from torchvision.models import resnet18, ResNet18_Weights
 from sklearn.metrics import accuracy_score, average_precision_score
 from sklearn.model_selection import train_test_split
+from tqdm import tqdm
 
 # Setting random seed for testing
 RANDOM_SEED = 77
@@ -25,7 +26,7 @@ config = {
 
 # Task 1a)
 # Storing paths to images and corresponding labels
-root_dir = "/home/adrian/iris-master/in4310/innleveringer/oblig1"
+root_dir = "/itf-fi-ml/shared/courses/IN3310"
 images_dir = "mandatory1_data"
 
 img_paths = []
@@ -107,7 +108,7 @@ def run_model(model, dataloader, is_training=False):
     all_predictions = torch.Tensor()
     all_labels = torch.Tensor()
 
-    for batch_idx, (batch_images, batch_labels) in enumerate(dataloader):
+    for batch_idx, (batch_images, batch_labels) in enumerate(tqdm(dataloader)):
         if not is_training:
             with torch.no_grad():
                 batch_predictions = model(batch_images)
@@ -126,9 +127,12 @@ def run_model(model, dataloader, is_training=False):
     # Calculating performance metrics
     if not is_training:
         accuracy = accuracy_score(all_labels, all_predictions)
-        ap_score = average_precision_score(all_labels, all_predictions, average="micro")
+        ap_score = average_precision_score(all_labels, all_predictions, average=None)
         mean_ap_score = average_precision_score(all_labels, all_predictions, average="macro")
+        
+        return accuracy, ap_score, mean_ap_score
 
+# Run model for specified amount of epochs
 for e in range(config["epochs"]):
     run_model(model, train_dataloader, is_training=True)
 
