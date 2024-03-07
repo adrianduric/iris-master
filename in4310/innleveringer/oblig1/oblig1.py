@@ -64,12 +64,6 @@ class ImageDataset(Dataset):
         self.img_paths = img_paths
         self.img_labels = img_labels
         self.transform = ResNet18_Weights.DEFAULT.transforms()
-        # self.transform = transforms.Compose([
-        #     transforms.Resize(256),
-        #     transforms.CenterCrop(224),
-        #     transforms.ToTensor(),
-        #     transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225]),
-        # ])
 
     def __len__(self):
         return len(self.img_labels)
@@ -78,7 +72,9 @@ class ImageDataset(Dataset):
         image = Image.open(self.img_paths[idx])
         label = self.img_labels[idx]
         image = self.transform(image)
+
         return image, label
+#end ImageDataset
 
 # Creating Datasets and DataLoaders
 train_dataset = ImageDataset(img_paths_train, img_labels_train)
@@ -106,43 +102,55 @@ optimizer = torch.optim.Adam(model.parameters())
 
 
 # Task 1e)
-# Code to run model in training and inference
-def run_model(model, dataloader, is_training=False):
-    all_predictions = torch.Tensor()
-    all_labels = torch.Tensor()
+# Train model for one epoch
+def train_model(model, train_dataloader):
 
+    # Iterating through batches
     for batch_idx, (batch_images, batch_labels) in enumerate(tqdm(dataloader)):
         if config["use_cuda"]:
             batch_images = batch_images.to("cuda")
             batch_labels = batch_labels.to("cuda")
             
-        if not is_training:
-            with torch.no_grad():
-                batch_predictions = model(batch_images)
-                all_predictions = torch.cat((all_predictions, batch_predictions), 0)
-                all_labels = torch.cat((all_labels, batch_labels), 0)
+        # Forward pass and loss calculation
+        batch_predictions  = model(batch_images)
+        loss = loss_fn(batch_predictions, batch_labels)
+        
+        # Backpropagation and updating weights
+        optimizer.zero_grad()
+        loss.backward()
+        optimizer.step()
+#end train_model
 
-        elif is_training:
-            batch_predictions  = model(batch_images)
-            loss = loss_fn(batch_predictions, batch_labels)
+# Test model on testing or validation data
+def test_model(model, test_dataloader):
 
-            optimizer.zero_grad()
-            loss.backward()
-            optimizer.step()
+    all_predictions = torch.Tensor()
+    all_labels = torch.Tensor()
+
+    # Iterating through batches
+    for batch_idx, (batch_images, batch_labels) in enumerate(tqdm(dataloader)):
+        with torch.no_grad():
+            batch_predictions = model(batch_images)
+            all_predictions = torch.cat((all_predictions, batch_predictions), 0)
+            all_labels = torch.cat((all_labels, batch_labels), 0)
 
     # Task 1d)
     # Calculating performance metrics
-    if not is_training:
-        accuracy = accuracy_score(all_labels, all_predictions)
-        ap_score = average_precision_score(all_labels, all_predictions, average=None)
-        mean_ap_score = average_precision_score(all_labels, all_predictions, average="macro")
+    accuracy = accuracy_score(all_labels, all_predictions)
+    ap_score = average_precision_score(all_labels, all_predictions, average=None)
+    mean_ap_score = average_precision_score(all_labels, all_predictions, average="macro")
         
-        return accuracy, ap_score, mean_ap_score
+    return accuracy, ap_score, mean_ap_score
+#end test_model
 
-# Run model for specified amount of epochs
+# Train model for specified amount of epochs
 for e in range(config["epochs"]):
-    run_model(model, train_dataloader, is_training=True)
+    print(f"----------- EPOCH {e+1} -----------")
+    train_model(model, train_dataloader)
 
+    # Tracking metrics on validation sets during training
+    accuracy, ap_score, mean_ap_score = run_model(model, train_dataloader, is_training=True)
+    print(accuracy, ap_score, mean_ap_score)
 
 
 
