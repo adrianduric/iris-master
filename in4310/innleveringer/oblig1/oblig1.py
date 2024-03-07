@@ -98,12 +98,12 @@ if config["use_cuda"]:
 loss_fn = nn.CrossEntropyLoss()
 
 # Choosing Adam as optimizer
-optimizer = torch.optim.Adam(model.parameters())
+optimizer = torch.optim.SGD(model.parameters())
 
 
 # Task 1e)
 # Train model for one epoch
-def train_model(model, train_dataloader):
+def train_model(model, dataloader):
 
     # Iterating through batches
     for batch_idx, (batch_images, batch_labels) in enumerate(tqdm(dataloader)):
@@ -122,13 +122,19 @@ def train_model(model, train_dataloader):
 #end train_model
 
 # Test model on testing or validation data
-def test_model(model, test_dataloader):
+def test_model(model, dataloader):
 
     all_predictions = torch.Tensor()
     all_labels = torch.Tensor()
+    if config["use_cuda"]:
+        all_predictions = all_predictions.to("cuda")
+        all_labels = all_labels.to("cuda")
 
     # Iterating through batches
     for batch_idx, (batch_images, batch_labels) in enumerate(tqdm(dataloader)):
+        if config["use_cuda"]:
+            batch_images = batch_images.to("cuda")
+            batch_labels = batch_labels.to("cuda")
         with torch.no_grad():
             batch_predictions = model(batch_images)
             all_predictions = torch.cat((all_predictions, batch_predictions), 0)
@@ -149,7 +155,7 @@ for e in range(config["epochs"]):
     train_model(model, train_dataloader)
 
     # Tracking metrics on validation sets during training
-    accuracy, ap_score, mean_ap_score = run_model(model, train_dataloader, is_training=True)
+    accuracy, ap_score, mean_ap_score = test_model(model, val_dataloader)
     print(accuracy, ap_score, mean_ap_score)
 
 
