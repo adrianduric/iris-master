@@ -95,6 +95,9 @@ test_dataloader = DataLoader(test_dataset, batch_size=config["batch_size"], shuf
 weights = ResNet18_Weights.DEFAULT
 model = resnet18(weights=weights)
 
+if config["use_cuda"]:
+    model.to("cuda")
+
 # Choosing CrossEntropyLoss as loss function
 loss_fn = nn.CrossEntropyLoss()
 
@@ -109,6 +112,10 @@ def run_model(model, dataloader, is_training=False):
     all_labels = torch.Tensor()
 
     for batch_idx, (batch_images, batch_labels) in enumerate(tqdm(dataloader)):
+        if config["use_cuda"]:
+            batch_images = batch_images.to("cuda")
+            batch_labels = batch_labels.to("cuda")
+            
         if not is_training:
             with torch.no_grad():
                 batch_predictions = model(batch_images)
