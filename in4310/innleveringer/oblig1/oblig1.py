@@ -156,7 +156,7 @@ for e in range(config["epochs"]):
 
     # Tracking metrics on validation sets during training
     accuracy, ap_score, mean_ap_score = test_model(model, val_dataloader)
-    print(accuracy, ap_score, mean_ap_score)
+    print(f"Accuracy: {accuracy}, AP: {ap_score}, mAP: {mean_ap_score})
 
 
 
