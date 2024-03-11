@@ -8,6 +8,8 @@ from tqdm import tqdm
 # Train model for one epoch
 def train_model(dataloader, model, loss_fn, optimizer, config):
 
+    total_loss = 0
+
     # Iterating through batches
     for batch_idx, (batch_images, batch_labels) in enumerate(tqdm(dataloader)):
         if config["use_cuda"]:
@@ -17,19 +19,24 @@ def train_model(dataloader, model, loss_fn, optimizer, config):
         # Forward pass and loss calculation
         batch_predictions = model(batch_images)
         loss = loss_fn(batch_predictions, batch_labels)
+        total_loss += loss.item()
         
         # Backpropagation and updating weights
         optimizer.zero_grad()
         loss.backward()
         optimizer.step()
-#end train_model
+    
+    return total_loss
+
 
 # Test model on testing or validation data
-def test_model(model, dataloader, config):
+def test_model(dataloader, model, loss_fn, config):
 
     all_predictions = torch.Tensor()
     all_labels = torch.Tensor()
     all_labels_one_hot = torch.Tensor()
+    total_loss = 0
+
     if config["use_cuda"]:
         all_predictions = all_predictions.to("cuda")
         all_labels = all_labels.to("cuda")
@@ -41,8 +48,10 @@ def test_model(model, dataloader, config):
             batch_images = batch_images.to("cuda")
             batch_labels = batch_labels.to("cuda")
         with torch.no_grad():
-            batch_predictions = model(batch_images)
             batch_labels_one_hot = nn.functional.one_hot(batch_labels.long(), num_classes=6)
+            batch_predictions = model(batch_images)
+            loss = loss_fn(batch_predictions, batch_labels)
+            total_loss += loss.item()
 
             all_predictions = torch.cat((all_predictions, batch_predictions), 0)
             all_labels = torch.cat((all_labels, batch_labels), 0)
@@ -58,8 +67,7 @@ def test_model(model, dataloader, config):
     ap_score = average_precision_score(all_labels_one_hot, all_predictions, average=None)
     mean_ap_score = average_precision_score(all_labels_one_hot, all_predictions, average="macro")
         
-    return accuracy, ap_score, mean_ap_score
-#end test_model
+    return total_loss, accuracy, ap_score, mean_ap_score
 
 
 
