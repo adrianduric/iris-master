@@ -91,6 +91,9 @@ test_dataloader = DataLoader(test_dataset, batch_size=config["batch_size"], shuf
 weights = ResNet18_Weights.DEFAULT
 model = resnet18(weights=weights)
 
+# Swapping last layer for classification of 6 labels
+model.fc = nn.Linear(in_features=512, out_features=6, bias=True)
+
 if config["use_cuda"]:
     model.to("cuda")
 
