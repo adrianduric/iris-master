@@ -137,6 +137,9 @@ def test_model(model, dataloader):
         if config["use_cuda"]:
             batch_images = batch_images.to("cuda")
             batch_labels = batch_labels.to("cuda")
+            
+            print(batch_images.shape)
+            print(batch_labels.shape)
         with torch.no_grad():
             batch_predictions = model(batch_images)
             all_predictions = torch.cat((all_predictions, batch_predictions), 0)
