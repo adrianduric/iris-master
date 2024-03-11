@@ -51,7 +51,7 @@ for model_num in range(3):
         train_model(train_dataloader, model, loss_fn, optimizer, config)
 
         # Tracking metrics on validation sets during training
-        accuracy, ap_score, mean_ap_score = test_model(model, val_dataloader)
+        accuracy, ap_score, mean_ap_score = test_model(model, val_dataloader, config)
         accuracies.append(accuracy)
         ap_scores.append(ap_score)
         mean_ap_scores.append(mean_ap_score)
