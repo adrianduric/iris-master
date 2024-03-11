@@ -132,12 +132,13 @@ def test_model(model, dataloader):
 
     # Iterating through batches
     for batch_idx, (batch_images, batch_labels) in enumerate(tqdm(dataloader)):
+        print(batch_images.shape)
+        print(batch_labels.shape)
         if config["use_cuda"]:
             batch_images = batch_images.to("cuda")
             batch_labels = batch_labels.to("cuda")
         with torch.no_grad():
             batch_predictions = model(batch_images)
-            print("SHAPE: ", batch_predictions.shape)
             all_predictions = torch.cat((all_predictions, batch_predictions), 0)
             all_labels = torch.cat((all_labels, batch_labels), 0)
 
@@ -145,9 +146,6 @@ def test_model(model, dataloader):
     # Calculating performance metrics
     all_predictions = all_predictions.to("cpu")
     all_labels = all_labels.to("cpu")
-    print(all_predictions.shape)
-    print(all_labels.shape)
-    print(all_labels)
     
     # accuracy = accuracy_score(all_labels, all_predictions)
     ap_score = average_precision_score(all_labels, all_predictions, average=None)
