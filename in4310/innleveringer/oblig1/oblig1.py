@@ -127,9 +127,11 @@ def train_model(model, dataloader):
 # Test model on testing or validation data
 def test_model(model, dataloader):
 
-    accuracy_scores = torch.Tensor()
-    ap_scores = torch.Tensor()
-    mean_ap_scores = torch.Tensor()
+    all_predictions = torch.Tensor()
+    all_labels = torch.Tensor()
+    if config["use_cuda"]:
+        all_predictions = all_predictions.to("cuda")
+        all_labels = all_labels.to("cuda")
 
     # Iterating through batches
     for batch_idx, (batch_images, batch_labels) in enumerate(tqdm(dataloader)):
@@ -138,20 +140,20 @@ def test_model(model, dataloader):
             batch_labels = batch_labels.to("cuda")
         with torch.no_grad():
             batch_predictions = model(batch_images)
+            all_predictions = torch.cat((all_predictions, batch_predictions), 0)
+            all_labels = torch.cat((all_labels, batch_labels), 0)
 
-            # Task 1d)
-            # Calculating performance metrics
-            batch_aps = average_precision_score(batch_labels, batch_predictions, average=None)
-            batch_mean_aps = average_precision_score(batch_labels, batch_predictions, average="macro")
-
-            ap_scores = torch.cat((ap_scores, batch_aps), dim=0)
-            mean_ap_scores = torch.cat((mean_ap_scores, batch_mean_aps), dim=0)
-
+    # Task 1d)
+    # Calculating performance metrics
+    all_predictions = all_predictions.to("cpu")
+    all_labels = all_labels.to("cpu")
+    
     # accuracy = accuracy_score(all_labels, all_predictions)
+    ap_score = average_precision_score(all_labels, all_predictions, average=None)
+    mean_ap_score = average_precision_score(all_labels, all_predictions, average="macro")
         
-    return ap_scores, mean_ap_scores
+    return  ap_score, mean_ap_score
 #end test_model
-
 # Train model for specified amount of epochs
 for e in range(config["epochs"]):
     print(f"----------- EPOCH {e+1} -----------")
