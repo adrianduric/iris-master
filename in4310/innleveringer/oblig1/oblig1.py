@@ -142,9 +142,12 @@ def test_model(model, dataloader):
 
     # Task 1d)
     # Calculating performance metrics
-    accuracy = accuracy_score(all_labels.numpy(), all_predictions.numpy())
-    ap_score = average_precision_score(all_labels.numpy(), all_predictions.numpy(), average=None)
-    mean_ap_score = average_precision_score(all_labels.numpy(), all_predictions.numpy(), average="macro")
+    all_predictions = all_predictions.to("cpu")
+    all_labels = all_labels.to("cpu")
+    
+    accuracy = accuracy_score(all_labels, all_predictions)
+    ap_score = average_precision_score(all_labels, all_predictions, average=None)
+    mean_ap_score = average_precision_score(all_labels, all_predictions, average="macro")
         
     return accuracy, ap_score, mean_ap_score
 #end test_model
