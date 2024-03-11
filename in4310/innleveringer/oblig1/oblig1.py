@@ -139,11 +139,11 @@ def test_model(model, dataloader):
             batch_images = batch_images.to("cuda")
             batch_labels = batch_labels.to("cuda")
         with torch.no_grad():
-            print(f"batch labels shape: {batch_predictions.shape}")
+            print(f"batch labels shape: {batch_labels.shape}")
             batch_predictions = model(batch_images)
             print(f"batch preds shape: {batch_predictions.shape}")
             batch_images = nn.functional.one_hot(batch_images)
-            print(f"batch preds shape after one hot: {batch_predictions.shape}")
+            print(f"batch preds shape after one hot: {batch_labels.shape}")
             all_predictions = torch.cat((all_predictions, batch_predictions), 0)
             all_labels = torch.cat((all_labels, batch_labels), 0)
 
