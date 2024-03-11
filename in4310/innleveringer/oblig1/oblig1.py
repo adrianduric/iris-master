@@ -144,6 +144,9 @@ def test_model(model, dataloader):
     # Calculating performance metrics
     all_predictions = all_predictions.to("cpu")
     all_labels = all_labels.to("cpu")
+    print(all_predictions.shape)
+    print(all_labels.shape)
+    print(all_labels)
     
     # accuracy = accuracy_score(all_labels, all_predictions)
     ap_score = average_precision_score(all_labels, all_predictions, average=None)
