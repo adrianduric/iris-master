@@ -26,21 +26,24 @@ config = {
 
 # Task 1a)
 # Storing paths to images and corresponding labels
-root_dir = os.path.dirname(os.path.abspath(__file__))
+root_path = os.path.dirname(os.path.abspath(__file__))
 images_dir = "mandatory1_data"
+images_path = os.path.join(root_path, images_dir)
 
 img_paths = []
 img_labels = []
 
 i = 0
-for label_dir, _, filenames in os.walk(os.path.join(root_dir, images_dir)):
+for label_dir in os.listdir(images_path):
     label = i
+    label_path = os.path.join(images_path, label_dir)
 
-    for filename in filenames:
-        file_path = os.path.join(label_dir, filename)
+    for file_name in os.listdir(label_path):
+        file_path = os.path.join(label_path, file_name)
         
         img_paths.append(file_path)
         img_labels.append(label)
+    i += 1
 
 # Performing split of dataset
 # First splitting test set and the rest
@@ -86,22 +89,6 @@ val_dataloader = DataLoader(val_dataset, batch_size=config["batch_size"], shuffl
 test_dataloader = DataLoader(test_dataset, batch_size=config["batch_size"], shuffle=True)
 
 
-# Task 1c)
-# Loading ResNet18 pretrained with weights
-weights = ResNet18_Weights.DEFAULT
-model = resnet18(weights=weights)
-
-# Swapping last layer for classification of 6 labels
-model.fc = nn.Linear(in_features=512, out_features=6, bias=True)
-
-if config["use_cuda"]:
-    model.to("cuda")
-
-# Choosing CrossEntropyLoss as loss function
-loss_fn = nn.CrossEntropyLoss()
-
-# Choosing Adam as optimizer
-optimizer = torch.optim.SGD(model.parameters())
 
 
 # Task 1e)
@@ -115,7 +102,7 @@ def train_model(model, dataloader):
             batch_labels = batch_labels.to("cuda")
             
         # Forward pass and loss calculation
-        batch_predictions  = model(batch_images)
+        batch_predictions = model(batch_images)
         loss = loss_fn(batch_predictions, batch_labels)
         
         # Backpropagation and updating weights
@@ -129,9 +116,11 @@ def test_model(model, dataloader):
 
     all_predictions = torch.Tensor()
     all_labels = torch.Tensor()
+    all_labels_one_hot = torch.Tensor()
     if config["use_cuda"]:
         all_predictions = all_predictions.to("cuda")
         all_labels = all_labels.to("cuda")
+        all_labels_one_hot = all_labels_one_hot.to("cuda")
 
     # Iterating through batches
     for batch_idx, (batch_images, batch_labels) in enumerate(tqdm(dataloader)):
@@ -139,33 +128,66 @@ def test_model(model, dataloader):
             batch_images = batch_images.to("cuda")
             batch_labels = batch_labels.to("cuda")
         with torch.no_grad():
-            print(f"batch labels shape: {batch_labels.shape}")
             batch_predictions = model(batch_images)
-            print(f"batch preds shape: {batch_predictions.shape}")
-            batch_images = nn.functional.one_hot(batch_images)
-            print(f"batch preds shape after one hot: {batch_labels.shape}")
+            batch_labels_one_hot = nn.functional.one_hot(batch_labels.long(), num_classes=6)
+
             all_predictions = torch.cat((all_predictions, batch_predictions), 0)
             all_labels = torch.cat((all_labels, batch_labels), 0)
+            all_labels_one_hot = torch.cat((all_labels_one_hot, batch_labels_one_hot), 0)
 
     # Task 1d)
     # Calculating performance metrics
     all_predictions = all_predictions.to("cpu")
     all_labels = all_labels.to("cpu")
-    
-    # accuracy = accuracy_score(all_labels, all_predictions)
-    ap_score = average_precision_score(all_labels, all_predictions, average=None)
-    mean_ap_score = average_precision_score(all_labels, all_predictions, average="macro")
-        
-    return  ap_score, mean_ap_score
-#end test_model
-# Train model for specified amount of epochs
-for e in range(config["epochs"]):
-    print(f"----------- EPOCH {e+1} -----------")
-    train_model(model, train_dataloader)
+    all_labels_one_hot = all_labels_one_hot.to("cpu")
 
-    # Tracking metrics on validation sets during training
-    ap_score, mean_ap_score = test_model(model, val_dataloader)
-    print(f"Accuracy: {accuracy}, AP: {ap_score}, mAP: {mean_ap_score}")
+    accuracy = torch.sum(torch.argmax(all_predictions, dim=1) == all_labels) / len(all_labels)
+    ap_score = average_precision_score(all_labels_one_hot, all_predictions, average=None)
+    mean_ap_score = average_precision_score(all_labels_one_hot, all_predictions, average="macro")
+        
+    return accuracy, ap_score, mean_ap_score
+#end test_model
+
+# Storing data from runs
+accuracies = []
+ap_scores = []
+mean_ap_scores = []
+    
+# Training and evaluating 3 models
+for model_num in range(3):
+
+    # Task 1c)
+    # Loading ResNet18 pretrained with weights
+    weights = ResNet18_Weights.DEFAULT
+    model = resnet18(weights=weights)
+
+    # Swapping last layer for classification of 6 labels
+    model.fc = nn.Linear(in_features=512, out_features=6, bias=True)
+
+    if config["use_cuda"]:
+        model.to("cuda")
+
+    # Choosing CrossEntropyLoss as loss function
+    loss_fn = nn.CrossEntropyLoss()
+
+    # Choosing Adam as optimizer
+    optimizer = torch.optim.SGD(model.parameters())
+    # Train model for specified amount of epochs
+    for e in range(config["epochs"]):
+        print(f"----------- EPOCH {e+1} -----------")
+        train_model(model, train_dataloader)
+
+        # Tracking metrics on validation sets during training
+        accuracy, ap_score, mean_ap_score = test_model(model, val_dataloader)
+        accuracies.append(accuracy)
+        ap_scores.append(ap_score)
+        mean_ap_scores.append(mean_ap_score)
+
+    plt.plot(range(config["epochs"]), accuracies)
+    plt.plot(range(config["epochs"]), ap_scores)
+    plt.plot(range(config["epochs"], mean_ap_scores)
+    plt.show()
+    
 
 
 
