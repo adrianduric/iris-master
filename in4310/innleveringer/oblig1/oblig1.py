@@ -145,11 +145,11 @@ def test_model(model, dataloader):
     all_predictions = all_predictions.to("cpu")
     all_labels = all_labels.to("cpu")
     
-    accuracy = accuracy_score(all_labels, all_predictions)
+    # accuracy = accuracy_score(all_labels, all_predictions)
     ap_score = average_precision_score(all_labels, all_predictions, average=None)
     mean_ap_score = average_precision_score(all_labels, all_predictions, average="macro")
         
-    return accuracy, ap_score, mean_ap_score
+    return  ap_score, mean_ap_score
 #end test_model
 
 # Train model for specified amount of epochs
@@ -158,7 +158,7 @@ for e in range(config["epochs"]):
     train_model(model, train_dataloader)
 
     # Tracking metrics on validation sets during training
-    accuracy, ap_score, mean_ap_score = test_model(model, val_dataloader)
+    ap_score, mean_ap_score = test_model(model, val_dataloader)
     print(f"Accuracy: {accuracy}, AP: {ap_score}, mAP: {mean_ap_score}")
 
 
