@@ -100,7 +100,7 @@ best_val_loss = val_losses[best_idx]
 best_accuracy = accuracies[best_idx]
 best_ap = ap_scores[best_idx]
 best_mean_ap = mean_ap_scores[best_idx]
-torch.save(best_model, os.path.join(os.path.dirname(os.path.abspath(__file__)), "best_model.pt"))
+torch.save(best_model, os.path.join(os.path.dirname(os.path.abspath(__file__)), "results/best_model.pt"))
 
 # Plotting metrics
 plt.plot(range(config["epochs"]), best_accuracy, label="Accuracy")
@@ -109,7 +109,7 @@ plt.title(f"Model metrics for lr={config['learningRate']}")
 plt.xlabel("Epochs")
 plt.ylabel("Metric score")
 plt.legend()
-plt.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_metrics.png"))
+plt.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)), "results/model_metrics.png"))
 plt.clf()
 
 # Plotting loss
@@ -119,7 +119,7 @@ plt.title(f"Model loss for lr={config['learningRate']}")
 plt.xlabel("Epochs")
 plt.ylabel("Loss")
 plt.legend()
-plt.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)), "model_loss.png"))
+plt.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)), "results/model_loss.png"))
 plt.clf()
 
 
