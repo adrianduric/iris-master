@@ -65,7 +65,7 @@ for model_num in range(3):
         print("Testing complete.\n")
         print(f"Accuracy per class: {epoch_acc_per_class}\nMean accuracy per class: {epoch_mean_acc}\nAP Score: {epoch_ap}\nmAP Score: {epoch_mean_ap}\n")
 
-        model_training_losses.append(epoch_val_loss)
+        model_training_losses.append(epoch_training_loss)
         model_val_losses.append(epoch_val_loss)
         model_mean_accs.append(epoch_mean_acc)
         model_mean_ap_scores.append(epoch_mean_ap)
@@ -147,7 +147,7 @@ for class_idx in range(3): # Selecting first 3 classes:
 
     # Accessing and saving best and worst images
     figure = plt.figure()
-    figure.suptitle("Best 10 classifications for class {class_idx}")
+    figure.suptitle(f"Best 10 classifications for class {class_idx}")
     rows = 2
     cols = 5
     for i in range(rows*cols):
@@ -160,7 +160,7 @@ for class_idx in range(3): # Selecting first 3 classes:
     plt.clf()
 
     figure = plt.figure()
-    figure.suptitle("Worst 10 classifications for class {class_idx}")
+    figure.suptitle(f"Worst 10 classifications for class {class_idx}")
     for i in range(rows*cols):
         img = test_dataset[worst_10_indices[i]][0].numpy()
         figure.add_subplot(rows, cols, i+1)
