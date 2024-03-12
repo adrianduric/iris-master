@@ -1,6 +1,5 @@
 from data_mgmt import *
 from model import *
-import numpy as np
 import matplotlib.pyplot as plt
 from torchvision.models import resnet18
 
@@ -24,8 +23,7 @@ train_dataloader, val_dataloader, test_dataloader = create_dataloaders(config)
 models = []
 training_losses = []
 val_losses = []
-accuracies = []
-ap_scores = []
+mean_accuracies = []
 mean_ap_scores = []
     
 # Training and evaluating 3 models
@@ -50,8 +48,7 @@ for model_num in range(3):
 
     model_training_losses = []
     model_val_losses = []
-    model_accuracies = []
-    model_ap_scores = []
+    model_mean_accs = []
     model_mean_ap_scores = []
 
 
@@ -64,20 +61,18 @@ for model_num in range(3):
 
         # Tracking metrics on validation sets during training
         print("Testing model on validation set...")
-        epoch_val_loss, epoch_acc, epoch_ap, epoch_mean_ap = test_model(val_dataloader, model, loss_fn, config)
+        epoch_val_loss, epoch_acc_per_class, epoch_mean_acc, epoch_ap, epoch_mean_ap = test_model(val_dataloader, model, loss_fn, config)
         print("Testing complete.\n")
-        print(f"Accuracy: {epoch_acc}\nAP Score: {epoch_ap}\nmAP Score: {epoch_mean_ap}")
+        print(f"Accuracy per class: {epoch_acc_per_class}\nMean accuracy per class: {epoch_mean_acc}\nAP Score: {epoch_ap}\nmAP Score: {epoch_mean_ap}\n")
 
         model_training_losses.append(epoch_training_loss)
         model_val_losses.append(epoch_val_loss)
-        model_accuracies.append(epoch_acc)
-        model_ap_scores.append(epoch_ap)
+        model_mean_accs.append(epoch_mean_acc)
         model_mean_ap_scores.append(epoch_mean_ap)
         
     training_losses.append(model_training_losses)
     val_losses.append(model_val_losses)
-    accuracies.append(model_accuracies)
-    ap_scores.append(model_ap_scores)
+    mean_accuracies.append(model_mean_accs)
     mean_ap_scores.append(model_mean_ap_scores)
 
     models.append(model) # Storing model
@@ -97,13 +92,12 @@ for i in range(len(models)):
 best_model = models[best_idx]
 best_training_loss = training_losses[best_idx]
 best_val_loss = val_losses[best_idx]
-best_accuracy = accuracies[best_idx]
-best_ap = ap_scores[best_idx]
+best_mean_accuracy = mean_accuracies[best_idx]
 best_mean_ap = mean_ap_scores[best_idx]
 torch.save(best_model, os.path.join(os.path.dirname(os.path.abspath(__file__)), "results/best_model.pt"))
 
 # Plotting metrics
-plt.plot(range(config["epochs"]), best_accuracy, label="Accuracy")
+plt.plot(range(config["epochs"]), best_mean_accuracy, label="Mean Accuracy Per Class")
 plt.plot(range(config["epochs"]), best_mean_ap, label="mAP Score")
 plt.title(f"Model metrics for lr={config['learningRate']}")
 plt.xlabel("Epochs")
@@ -122,5 +116,13 @@ plt.legend()
 plt.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)), "results/model_loss.png"))
 plt.clf()
 
+# Predicting on test set
+print("Testing model on test set...")
+softmaxes, _, _, mean_acc, _, mean_ap = test_model(val_dataloader, model, loss_fn, config, get_softmax=True)
+print("Testing complete.\n")
+print(f"Mean accuracy per class: {epoch_mean_acc}\nmAP Score: {epoch_mean_ap}\n")
+
+# Saving softmax scores
+torch.save(softmaxes, "results/softmax_scores.pt")
 
     
