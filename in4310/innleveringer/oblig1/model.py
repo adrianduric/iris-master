@@ -12,7 +12,7 @@ def train_model(dataloader, model, loss_fn, optimizer, config):
     total_loss = 0
 
     # Iterating through batches
-    for batch_idx, (batch_images, batch_labels) in enumerate(tqdm(dataloader)):
+    for batch_images, batch_labels, _ in tqdm(dataloader):
         if config["use_cuda"]:
             batch_images = batch_images.to("cuda")
             batch_labels = batch_labels.to("cuda")
@@ -37,6 +37,7 @@ def test_model(dataloader, model, loss_fn, config, get_softmax=False):
     all_predictions = torch.Tensor()
     all_labels = torch.Tensor()
     all_labels_one_hot = torch.Tensor()
+    all_indices = torch.Tensor()
     total_loss = 0
 
     if config["use_cuda"]:
@@ -44,12 +45,14 @@ def test_model(dataloader, model, loss_fn, config, get_softmax=False):
         all_softmaxes = all_softmaxes.to("cuda")
         all_labels = all_labels.to("cuda")
         all_labels_one_hot = all_labels_one_hot.to("cuda")
+        all_indices = all_indices.to("cuda")
 
     # Iterating through batches
-    for batch_idx, (batch_images, batch_labels) in enumerate(tqdm(dataloader)):
+    for batch_images, batch_labels, batch_indices in tqdm(dataloader):
         if config["use_cuda"]:
             batch_images = batch_images.to("cuda")
             batch_labels = batch_labels.to("cuda")
+            batch_indices = batch_indices.to("cuda")
         with torch.no_grad():
             
             batch_softmaxes = model(batch_images)
@@ -58,11 +61,12 @@ def test_model(dataloader, model, loss_fn, config, get_softmax=False):
 
             batch_labels_one_hot = nn.functional.one_hot(batch_labels.long(), num_classes=6)
             batch_predictions = torch.argmax(batch_softmaxes, dim=1)
-            
-            all_predictions = torch.cat((all_predictions, batch_predictions), 0)
             all_softmaxes = torch.cat((all_softmaxes, batch_softmaxes), 0)
+            all_predictions = torch.cat((all_predictions, batch_predictions), 0)
             all_labels = torch.cat((all_labels, batch_labels), 0)
             all_labels_one_hot = torch.cat((all_labels_one_hot, batch_labels_one_hot), 0)
+            all_indices = torch.cat((all_indices, batch_indices), 0)
+
 
     # Task 1d)
     # Calculating performance metrics
@@ -78,7 +82,7 @@ def test_model(dataloader, model, loss_fn, config, get_softmax=False):
     mean_ap_score = average_precision_score(all_labels_one_hot, all_softmaxes, average="macro")
 
     if get_softmax:
-        return all_softmaxes, total_loss, accuracy_per_class, mean_accuracy_per_class, ap_score, mean_ap_score
+        return all_softmaxes, all_indices, total_loss, accuracy_per_class, mean_accuracy_per_class, ap_score, mean_ap_score
     return total_loss, accuracy_per_class, mean_accuracy_per_class, ap_score, mean_ap_score
 
 

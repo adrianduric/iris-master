@@ -21,13 +21,13 @@ class ImageDataset(Dataset):
         label = self.img_labels[idx]
         image = self.transform(image)
 
-        return image, label
+        return image, label, idx
 #end ImageDataset
     
 
 # Task 1a)
 # Storing paths to images and corresponding labels
-def create_dataloaders(config):
+def prepare_data(config):
     root_path = os.path.dirname(os.path.abspath(__file__))
     images_dir = "mandatory1_data"
     images_path = os.path.join(root_path, images_dir)
@@ -70,4 +70,4 @@ def create_dataloaders(config):
     val_dataloader = DataLoader(val_dataset, batch_size=config["batch_size"], shuffle=True)
     test_dataloader = DataLoader(test_dataset, batch_size=config["batch_size"], shuffle=True)
 
-    return train_dataloader, val_dataloader, test_dataloader
+    return train_dataset, val_dataset, test_dataset, train_dataloader, val_dataloader, test_dataloader

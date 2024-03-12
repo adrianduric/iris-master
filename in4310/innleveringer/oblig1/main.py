@@ -5,7 +5,7 @@ from torchvision.models import resnet18
 
 
 # Setting random seed for testing
-RANDOM_SEED = 77
+RANDOM_SEED = 777
 torch.manual_seed(RANDOM_SEED)
 
 # Setting hyperparameters
@@ -17,7 +17,7 @@ config = {
          }
 
 # Creating DataLoaders from images
-train_dataloader, val_dataloader, test_dataloader = create_dataloaders(config)
+train_dataset, val_dataset, test_dataset, train_dataloader, val_dataloader, test_dataloader = prepare_data(config)
 
 # Storing data from runs
 models = []
@@ -65,7 +65,7 @@ for model_num in range(3):
         print("Testing complete.\n")
         print(f"Accuracy per class: {epoch_acc_per_class}\nMean accuracy per class: {epoch_mean_acc}\nAP Score: {epoch_ap}\nmAP Score: {epoch_mean_ap}\n")
 
-        model_training_losses.append(epoch_training_loss)
+        model_training_losses.append(epoch_val_loss)
         model_val_losses.append(epoch_val_loss)
         model_mean_accs.append(epoch_mean_acc)
         model_mean_ap_scores.append(epoch_mean_ap)
@@ -118,11 +118,64 @@ plt.clf()
 
 # Predicting on test set
 print("Testing model on test set...")
-softmaxes, _, _, mean_acc, _, mean_ap = test_model(val_dataloader, model, loss_fn, config, get_softmax=True)
+softmaxes, indices, _, _, mean_acc, _, mean_ap = test_model(test_dataloader, model, loss_fn, config, get_softmax=True)
 print("Testing complete.\n")
 print(f"Mean accuracy per class: {epoch_mean_acc}\nmAP Score: {epoch_mean_ap}\n")
 
 # Saving softmax scores
-torch.save(softmaxes, "results/softmax_scores.pt")
+torch.save(softmaxes, os.path.join(os.path.dirname(os.path.abspath(__file__)),"results/softmax_scores.pt"))
 
-    
+"""
+Finding 10 best and worst images according to softmax score. It isn't clear what is meant by "best and worst", so I interpret this the following way: for all predictions of a certain class, select the 10 highest and lowest softmax scores, i.e. the 10 predictions made with the highest and lowest probabilities of the predicted class.
+"""
+for class_idx in range(3): # Selecting first 3 classes:
+    preds = np.argmax(softmaxes.numpy(), axis=1)
+    highest_softmaxes = np.max(softmaxes.numpy(), axis=1)
+    class_indices = []
+    class_softmaxes = []
+
+    for i in range(len(preds)):
+        if preds[i] == class_idx: # When we find predictions of the chosen class:
+            class_indices.append(indices[i].int().item()) # Add to collection of these
+            class_softmaxes.append(highest_softmaxes[i])
+        
+    # Sorting to find 10 highest and lowest confidence predicted images for given class
+    class_indices, class_softmaxes = zip(*sorted(zip(class_indices, class_softmaxes), key=lambda x: x[1], reverse=True))
+
+    best_10_indices = class_indices[:10]
+    worst_10_indices = class_indices[-10:]
+
+    # Accessing and saving best and worst images
+    figure = plt.figure()
+    figure.suptitle("Best 10 classifications for class {class_idx}")
+    rows = 2
+    cols = 5
+    for i in range(rows*cols):
+        img = test_dataset[best_10_indices[i]][0].numpy()
+        figure.add_subplot(rows, cols, i+1)
+        plt.imshow(img.T) 
+        plt.axis('off') 
+        plt.title(f"Image {i}") 
+    plt.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)),f"results/best10_class{class_idx}"))
+    plt.clf()
+
+    figure = plt.figure()
+    figure.suptitle("Worst 10 classifications for class {class_idx}")
+    for i in range(rows*cols):
+        img = test_dataset[worst_10_indices[i]][0].numpy()
+        figure.add_subplot(rows, cols, i+1)
+        plt.imshow(img.T) 
+        plt.axis('off') 
+        plt.title(f"Image {i}") 
+    plt.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)),f"results/worst10_class{class_idx}"))
+    plt.clf()
+
+# Loading and predicting on test set again
+print("Retesting model on test set...")
+new_softmaxes, indices, _, _, mean_acc, _, mean_ap = test_model(test_dataloader, model, loss_fn, config, get_softmax=True)
+print("Testing complete.\n")
+print(f"Mean accuracy per class: {epoch_mean_acc}\nmAP Score: {epoch_mean_ap}\n")
+
+# Asserting equality between old and new softmaxes
+old_softmaxes = torch.load(os.path.join(os.path.dirname(os.path.abspath(__file__)),"results/softmax_scores.pt"))
+assert torch.allclose(old_softmaxes, new_softmaxes)
