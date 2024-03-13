@@ -9,8 +9,8 @@ config = {
           'seed': 77,
           'use_cuda': True,
           'batch_size': 16,
-          'epochs': 1,
-          'num_models': 1,
+          'epochs': 10,
+          'num_models': 3,
           'learningRate': 1e-3
          }
 
