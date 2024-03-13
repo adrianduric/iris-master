@@ -27,7 +27,7 @@ class ImageDataset(Dataset):
 
 # Task 1a)
 # Storing paths to images and corresponding labels
-def prepare_data(config):
+def prepare_data(config, seed=None):
     root_path = os.path.dirname(os.path.abspath(__file__))
     images_dir = "mandatory1_data"
     images_path = os.path.join(root_path, images_dir)
@@ -36,11 +36,11 @@ def prepare_data(config):
     img_labels = []
 
     i = 0
-    for label_dir in os.listdir(images_path):
+    for label_dir in sorted(os.listdir(images_path)):
         label = i
         label_path = os.path.join(images_path, label_dir)
 
-        for file_name in os.listdir(label_path):
+        for file_name in sorted(os.listdir(label_path)):
             file_path = os.path.join(label_path, file_name)
             
             img_paths.append(file_path)
@@ -50,11 +50,11 @@ def prepare_data(config):
     # Performing split of dataset
     # First splitting test set and the rest
     TEST_PORTION = 3000/len(img_paths) # splits approx. 3000 of features to test set
-    img_paths_temp, img_paths_test, img_labels_temp, img_labels_test = train_test_split(img_paths, img_labels, test_size=TEST_PORTION, stratify=img_labels)
+    img_paths_temp, img_paths_test, img_labels_temp, img_labels_test = train_test_split(img_paths, img_labels, test_size=TEST_PORTION, stratify=img_labels, random_state=seed)
 
     # Then splitting training and validation sets
     VAL_PORTION = 2000/len(img_paths_temp) # approx. 2000 features in validation set
-    img_paths_train, img_paths_val, img_labels_train, img_labels_val = train_test_split(img_paths_temp, img_labels_temp, test_size=VAL_PORTION, stratify=img_labels_temp)
+    img_paths_train, img_paths_val, img_labels_train, img_labels_val = train_test_split(img_paths_temp, img_labels_temp, test_size=VAL_PORTION, stratify=img_labels_temp, random_state=seed)
 
     # Asserting that sets are disjoint
     assert set(img_paths_train).isdisjoint(set(img_paths_val))
