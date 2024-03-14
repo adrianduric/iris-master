@@ -24,16 +24,26 @@ if config["use_cuda"]:
 # Task 2a)
 # Defining hook to extract output of module (feature map)
 chosen_layers = ["layer1", "layer2", "layer3", "layer4", "avgpool"]
-npv_percentages = []
+npv_percentages = {
+    "layer1": [],
+    "layer2": [],
+    "layer3": [],
+    "layer4": [],
+    "avgpool": []
+}
 
-def hook(module, input, output):
-    pos_vals = torch.where(output > 0, output, 0)
-    count = torch.count_nonzero(pos_vals).item()
-    npv_percentages.append(1 - (count/output.numel()))
-        
+def layer_hook(name):
+
+    def hook(module, input, output):
+        pos_vals = torch.where(output > 0, output, 0)
+        count = torch.count_nonzero(pos_vals).item()
+        npv_percentages[name].append(1 - (count/output.numel()))
+
+    return hook
+
 for nam, mod in model.named_modules():
     if nam in chosen_layers:
-        mod.register_forward_hook(hook)
+        mod.register_forward_hook(layer_hook(name=nam))
 
 # Task 2b)
 # Training model again to activate hooks   
@@ -51,5 +61,6 @@ for batch_idx, (batch_images, batch_labels, _) in enumerate(train_dataloader):
         break
 
 # Reporting average percentage
-npv_avg = np.mean(np.array(npv_percentages))
-print(f"Average percentage of non-positive values: {round(npv_avg * 100, 2)}%")
+for layer in chosen_layers:
+    npv_avg = np.mean(np.array(npv_percentages[layer]))
+    print(f"Average percentage of non-positive values for {layer}: {round(npv_avg * 100, 2)}%")

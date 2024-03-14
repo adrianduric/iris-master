@@ -5,7 +5,7 @@ from torchvision.models import ResNet18_Weights
 from sklearn.model_selection import train_test_split
 
 
-# Task 1b)
+# Task 1a)
 # Creating Dataset class for image files
 class ImageDataset(Dataset):
     def __init__(self, img_paths, img_labels):
@@ -24,8 +24,6 @@ class ImageDataset(Dataset):
         return image, label, idx
 #end ImageDataset
     
-
-# Task 1a)
 # Storing paths to images and corresponding labels
 def prepare_data(config, seed=None):
     root_path = os.path.dirname(os.path.abspath(__file__))
@@ -61,11 +59,13 @@ def prepare_data(config, seed=None):
     assert set(img_paths_train).isdisjoint(set(img_paths_test))
     assert set(img_paths_val).isdisjoint(set(img_paths_test))
 
-    # Creating Datasets and DataLoaders
+    # Creating Datasets
     train_dataset = ImageDataset(img_paths_train, img_labels_train)
     val_dataset = ImageDataset(img_paths_val, img_labels_val)
     test_dataset = ImageDataset(img_paths_test, img_labels_test)
 
+    # Task 1b)
+    # Creating DataLoaders
     train_dataloader = DataLoader(train_dataset, batch_size=config["batch_size"], shuffle=True)
     val_dataloader = DataLoader(val_dataset, batch_size=config["batch_size"], shuffle=True)
     test_dataloader = DataLoader(test_dataset, batch_size=config["batch_size"], shuffle=True)

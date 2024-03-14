@@ -81,7 +81,7 @@ def test_model(dataloader, model, loss_fn, config, get_logits=False):
     conf_matrix = confusion_matrix(all_labels, all_predictions)
     accuracy_per_class = conf_matrix.diagonal() / conf_matrix.sum(axis=1)
     mean_accuracy_per_class = np.mean(accuracy_per_class)
-    ap_score = average_precision_score(all_labels_one_hot, all_logits, average=None) # Part of task 1d)
+    ap_score = average_precision_score(all_labels_one_hot, all_logits, average=None)
     mean_ap_score = average_precision_score(all_labels_one_hot, all_logits, average="macro")
 
     if get_logits:

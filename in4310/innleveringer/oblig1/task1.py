@@ -11,14 +11,18 @@ config = {
           'batch_size': 16,
           'epochs': 10,
           'num_models': 3,
-          'learningRate': 1e-3
+          'learningRate': [2e-2, 1e-3, 2e-4]
          }
 
-# Setting seed for testing
-torch.manual_seed(config['seed'])
-
-# Creating Datasets and DataLoaders from images
-train_dataset, val_dataset, test_dataset, train_dataloader, val_dataloader, test_dataloader = prepare_data(config, seed=config['seed'])
+# Storing class dict for convenience
+classes = {
+    0: "buildings",
+    1: "forest",
+    2: "glacier",
+    3: "mountain",
+    4: "sea",
+    5: "street"
+}
 
 # Storing data from runs
 models = []
@@ -29,7 +33,12 @@ mean_ap_scores = []
     
 # Training and evaluating 3 models
 for model_num in range(config["num_models"]):
+    # Setting seed
+    torch.manual_seed(config['seed'])
 
+    # Creating Datasets and DataLoaders from images
+    train_dataset, val_dataset, test_dataset, train_dataloader, val_dataloader, test_dataloader = prepare_data(config, seed=config['seed'])
+    
     # Task 1c)
     # Loading ResNet18 pretrained with weights
     weights = ResNet18_Weights.DEFAULT
@@ -45,7 +54,7 @@ for model_num in range(config["num_models"]):
     loss_fn = nn.CrossEntropyLoss()
 
     # Choosing Adam as optimizer
-    optimizer = torch.optim.SGD(model.parameters())
+    optimizer = torch.optim.SGD(model.parameters(), lr=config['learningRate'][model_num]) # Hyperparameter setting for learning rate
 
     model_training_losses = []
     model_val_losses = []
@@ -77,7 +86,6 @@ for model_num in range(config["num_models"]):
     mean_ap_scores.append(model_mean_ap_scores)
 
     models.append(model) # Storing model
-    config["learningRate"] *= 5 # New hyperparameter setting for learning rate
 
 # Selecting and saving model with highest validation mAP
 best_model = best_training_loss = best_val_loss = best_accuracy = best_ap = best_mean_ap = None
@@ -98,8 +106,8 @@ best_mean_ap = mean_ap_scores[best_idx]
 torch.save(best_model, os.path.join(os.path.dirname(os.path.abspath(__file__)), "results/best_model.pt"))
 
 # Plotting metrics
-plt.plot(range(config["epochs"]), best_mean_accuracy, label="Mean Accuracy Per Class")
-plt.plot(range(config["epochs"]), best_mean_ap, label="mAP Score")
+plt.plot(range(config["epochs"]), best_mean_accuracy, label="Mean accuracy per class")
+plt.plot(range(config["epochs"]), best_mean_ap, label="mAP score")
 plt.title(f"Model metrics for lr={config['learningRate']}")
 plt.xlabel("Epochs")
 plt.ylabel("Metric score")
@@ -117,9 +125,7 @@ plt.legend()
 plt.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)), "results/model_loss.png"))
 plt.clf()
 
-# Setting seed again for reproducibility
-torch.manual_seed(config['seed'])
-
+# Task 1f
 # Predicting on test set
 print("Testing model on test set...")
 logits, labels, indices, _, _, mean_acc, _, mean_ap = test_model(test_dataloader, model, loss_fn, config, get_logits=True)
@@ -129,11 +135,9 @@ print(f"Mean accuracy per class: {mean_acc}\nmAP Score: {mean_ap}\n")
 #Calculating softmaxes
 softmaxes = nn.Softmax(dim=1)(logits)
 
-# Saving softmax scores
-torch.save(softmaxes, os.path.join(os.path.dirname(os.path.abspath(__file__)),"results/softmax_scores.pt"))
-
 # Finding 10 best and worst images according to softmax score.
-for class_idx in range(3): # Selecting first 3 classes:
+chosen_class_idxs = [2, 3, 4]
+for class_idx in chosen_class_idxs: # Selecting first 3 classes:
     class_indices = []
     class_softmaxes = []
 
@@ -150,7 +154,7 @@ for class_idx in range(3): # Selecting first 3 classes:
 
     # Accessing and saving best and worst images
     figure = plt.figure()
-    figure.suptitle(f"Best 10 classifications for class {class_idx}")
+    figure.suptitle(f"Best 10 classifications for the {classes[class_idx]} class")
     rows = 2
     cols = 5
     for i in range(rows*cols):
@@ -159,16 +163,16 @@ for class_idx in range(3): # Selecting first 3 classes:
         plt.imshow(np.einsum("ijk -> jki", img)) 
         plt.axis('off') 
         plt.title(f"Image {i}") 
-    plt.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)),f"results/best10_class{class_idx}"))
+    plt.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)),f"results/best10_{classes[class_idx]}"))
     plt.clf()
 
     figure = plt.figure()
-    figure.suptitle(f"Worst 10 classifications for class {class_idx}")
+    figure.suptitle(f"Worst 10 classifications for the {classes[class_idx]} class")
     for i in range(rows*cols):
         img = test_dataset[worst_10_indices[i]][0].numpy()
         figure.add_subplot(rows, cols, i+1)
         plt.imshow(np.einsum("ijk -> jki", img)) 
         plt.axis('off') 
         plt.title(f"Image {i}") 
-    plt.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)),f"results/worst10_class{class_idx}"))
+    plt.savefig(os.path.join(os.path.dirname(os.path.abspath(__file__)),f"results/worst10_{classes[class_idx]}"))
     plt.clf()
