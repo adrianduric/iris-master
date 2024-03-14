@@ -78,7 +78,7 @@ plt.ylabel('Principal Component 2')
 plt.title('PCA Projection of Feature Space')
 
 colors = plt.cm.viridis(np.linspace(0, 1, 6))
-legend_elements = [Line2D([0], [0], marker='o', color='w', label=f'Class {i}', markerfacecolor=clr, markersize=10) for i, clr in enumerate(colors)]
+legend_elements = [Line2D([0], [0], marker='o', color='w', label=f'{classes[i]}', markerfacecolor=clr, markersize=10) for i, clr in enumerate(colors)]
 
 for class_num in range(6):  # For each class:
     projections_of_class = projections[all_labels == class_num] 

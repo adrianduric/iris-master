@@ -11,7 +11,7 @@ config = {
           'batch_size': 16,
           'epochs': 10,
           'num_models': 3,
-          'learningRate': [2e-2, 1e-3, 2e-4]
+          'learningRate': [5e-3, 1e-3, 2e-4]
          }
 
 # Storing class dict for convenience
@@ -33,6 +33,7 @@ mean_ap_scores = []
     
 # Training and evaluating 3 models
 for model_num in range(config["num_models"]):
+    print(f"Now training model {model_num + 1}...")
     # Setting seed
     torch.manual_seed(config['seed'])
 
@@ -87,14 +88,14 @@ for model_num in range(config["num_models"]):
 
     models.append(model) # Storing model
 
-# Selecting and saving model with highest validation mAP
+# Selecting and saving model with highest validation mAP after training
 best_model = best_training_loss = best_val_loss = best_accuracy = best_ap = best_mean_ap = None
 best_idx = 0
-temp_mean_ap = np.array(mean_ap_scores[best_idx])
+temp_mean_ap = mean_ap_scores[best_idx][-1]
 
 for i in range(len(models)):
-    mean_ap = np.array(mean_ap_scores[i])
-    if np.max(mean_ap) > np.max(temp_mean_ap):
+    mean_ap = mean_ap_scores[i][-1] # Selecting mAP after training
+    if mean_ap > temp_mean_ap:
         temp_mean_ap = mean_ap
         best_idx = i
 
@@ -103,12 +104,13 @@ best_training_loss = training_losses[best_idx]
 best_val_loss = val_losses[best_idx]
 best_mean_accuracy = mean_accuracies[best_idx]
 best_mean_ap = mean_ap_scores[best_idx]
+best_learning_rate = config["learningRate"][best_idx]
 torch.save(best_model, os.path.join(os.path.dirname(os.path.abspath(__file__)), "results/best_model.pt"))
 
 # Plotting metrics
 plt.plot(range(config["epochs"]), best_mean_accuracy, label="Mean accuracy per class")
 plt.plot(range(config["epochs"]), best_mean_ap, label="mAP score")
-plt.title(f"Model metrics for lr={config['learningRate']}")
+plt.title(f"Model metrics for lr={config['learningRate'][best_idx]}")
 plt.xlabel("Epochs")
 plt.ylabel("Metric score")
 plt.legend()
@@ -118,7 +120,7 @@ plt.clf()
 # Plotting loss
 plt.plot(range(config["epochs"]), best_training_loss, label="Training loss")
 plt.plot(range(config["epochs"]), best_val_loss, label="Validation loss")
-plt.title(f"Model loss for lr={config['learningRate']}")
+plt.title(f"Model loss for lr={config['learningRate'][best_idx]}")
 plt.xlabel("Epochs")
 plt.ylabel("Loss")
 plt.legend()
