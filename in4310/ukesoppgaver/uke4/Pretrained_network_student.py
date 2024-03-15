@@ -4,9 +4,10 @@ import matplotlib.pyplot as plt
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms
 from PIL import Image
-from imagenet_first2500.getimagenetclasses import parseclasslabel, parsesynsetwords, get_classes
+from getimagenetclasses import parseclasslabel, parsesynsetwords, get_classes
 # Try other models https://pytorch.org/vision/stable/models.html
-from torchvision.models import resnet18
+from torchvision.models import resnet18, ResNet18_Weights
+from sklearn.metrics import accuracy_score
 
 
 class ImageNet2500(Dataset):
@@ -21,18 +22,18 @@ class ImageNet2500(Dataset):
     """
 
         self.root_dir = root_dir
-        self.xmllabeldir = root_dir + xmllabeldir
-        self.images_dir = root_dir + images_dir
+        self.xmllabeldir = os.path.join(root_dir, xmllabeldir)
+        self.images_dir = os.path.join(root_dir, images_dir)
         self.transform = transform
         self.imgfilenames = []
         self.labels = []
         self.ending = ".JPEG"
 
-        indicestosynsets, self.synsetstoindices, synsetstoclassdescr = parsesynsetwords(root_dir + synsetfile)
+        indicestosynsets, self.synsetstoindices, synsetstoclassdescr = parsesynsetwords(os.path.join(root_dir, synsetfile))
 
         for file in os.listdir(self.images_dir):
             if file.endswith(".JPEG"):
-                name = os.path.join(images_dir, file)
+                name = os.path.join(self.images_dir, file)
                 self.imgfilenames.append(name)
                 label, _ = parseclasslabel(self.filenametoxml(name), self.synsetstoindices)
                 self.labels.append(label)
@@ -54,8 +55,10 @@ class ImageNet2500(Dataset):
 
     def __getitem__(self, idx):
         img = Image.open(self.imgfilenames[idx])
+        if img.mode != "RGB":
+            img = img.convert("RGB")
         if self.transform:
-            image = self.transform(image)
+            img = self.transform(img)
         return img, self.labels[idx]
 
 def run_model(model, dataloader):
@@ -63,26 +66,27 @@ def run_model(model, dataloader):
     lbls = torch.Tensor()
 
     for batch_idx, data in enumerate(dataloader):
-        #  todo: iterate over the dataloader, and return the predictions and labels of the loaded images
-        #  across all batches
-        pass
+        prediction = model(data[0])
+        label = data[1]
+        torch.cat((pred, prediction), 0)
+        torch.cat((lbls, label), 0)
 
     return pred, lbls
 
 
 def plot_example(indx, model, dataset):
     sample = dataset[indx]
-    plt.imshow(sample["image"].permute(1, 2, 0))
+    plt.imshow(sample[0].permute(1, 2, 0))
     plt.show()
     # im = transforms.ToPILImage()(sample["image"])
     # im.show()
-    prediction = model(sample["image"].unsqueeze(0)).detach().numpy()[0]
+    prediction = model(sample[0].unsqueeze(0)).detach().numpy()[0]
     ind = prediction.argsort()[-5:][::-1]
     print("Top-5 predicted levels:\n")
     for key in ind:
         print(get_classes().get(key))
 
-    print("\nTrue label ", get_classes()[sample["label"]])
+    print("\nTrue label ", get_classes()[sample[1]])
 
 
 def compare_performance(model, loader_wo_normalize, loader_w_normalize):
@@ -91,16 +95,15 @@ def compare_performance(model, loader_wo_normalize, loader_w_normalize):
     # predictions and labels from dataset with normalization (labels are the same as before)
     preds_norm, _ = run_model(model, loader_w_normalize)
 
-    #  todo: calculate the accuracy when using normalized data and when using un-normalized data
-    acc = None
-    acc_norm = None
+    acc = accuracy_score(labels, preds)
+    acc_norm = accuracy_score(preds_norm, labels)
 
     print("Accuracy without normalize: ", acc)
     print("Accuracy with normalize: ", acc_norm)
 
 
 if __name__ == "__main__":
-    main_path = "/path/to/your/solution/"
+    main_path = "/home/adrian/iris-master/in4310/ukesoppgaver/uke4"
     # These files/folders should be inside the main_path directory, i.e.
     # ../solution /
     # ├── ILSVRC2012_bbox_val_v3 /
@@ -110,32 +113,32 @@ if __name__ == "__main__":
     # ├── getimagenetclasses.py
     # └── synset_words.txt
 
-    xmllabeldir = "/ILSVRC2012_bbox_val_v3/val/"
-    synsetfile = '/synset_words.txt'
+    xmllabeldir = "ILSVRC2012_bbox_val_v3/val/"
+    synsetfile = 'synset_words.txt'
     images_dir = "imagenet2500/imagespart"
 
     #  https://pytorch.org/vision/main/generated/torchvision.transforms.Compose.html
     base_transform = transforms.Compose([
         transforms.Resize(224),
-        transforms.CenterCrop((224, 224))
+        transforms.CenterCrop(224),
+        transforms.ToTensor()
     ])
 
     normalize_transform = transforms.Compose([
-        #  use the appropriate transforms in addition to normalization
-        #  use these statistics for normalization:
-        #  mean: [0.485, 0.456, 0.406], std_dev: [0.229, 0.224, 0.225]
+        transforms.Resize(224),
+        transforms.CenterCrop(224),
+        transforms.ToTensor(),
+        transforms.Normalize(mean=[0.485, 0.456, 0.406], std=[0.229, 0.224, 0.225])
     ])
 
-    #  todo: create a dataset and a dataloader without the normalization
-    dataset_wo_normalize = None
-    loader_wo_normalize = None
+    dataset_wo_normalize = ImageNet2500(root_dir=main_path, xmllabeldir=xmllabeldir, synsetfile=synsetfile, images_dir=images_dir, transform=base_transform)
+    loader_wo_normalize = DataLoader(dataset_wo_normalize, batch_size=64, shuffle=True)
 
-    #  todo: create a dataset and a dataloader **with** normalization
-    dataset_w_normalize = None
-    loader_w_normalize = None
+    dataset_w_normalize = ImageNet2500(root_dir=main_path, xmllabeldir=xmllabeldir, synsetfile=synsetfile, images_dir=images_dir, transform=normalize_transform)
+    loader_w_normalize = DataLoader(dataset_w_normalize, batch_size=64, shuffle=True)
 
     # load a pretrained model of choice (see models in torchvision.models)
-    model = None
+    model = resnet18(weights=ResNet18_Weights.DEFAULT)
     # Set model to eval mode to use the learned-statistics instead of batch-statistics for batch_norm, and skip
     # training-only operations like dropout. Try removing this line and see how the model performs!
     model.eval()
