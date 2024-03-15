@@ -8,12 +8,13 @@ from torch.autograd import Variable
 import numpy as np
 import torchvision
 from torchvision import datasets, models, transforms
+from torchvision.models import resnet18
 #import matplotlib.pyplot as plt
 import time
 import os
 
 #import skimage.io
-import PIL.Image
+from PIL import Image
 
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms, utils
@@ -25,29 +26,59 @@ class dataset_flowers(Dataset):
 
 
     self.root_dir = root_dir
+    self.images_dir = os.path.join(self.root_dir, "flowers_data/jpg")
 
     self.transform = transform
     self.imgfilenames=[]
     self.labels=[]
-
+    
 
     if trvaltest==0:
-      #load training data
+      # load training data
+      file = open("flowers_data/trainfile.txt", "r")
+      for line in file:
+        words = line.split()
+        imgfilename = words[0]
+        label = words[1]
+        self.imgfilenames.append(imgfilename)
+        self.labels.append(label)
+      file.close()
+
     elif trvaltest==1:
-      #load validation data
+      # load validation data
+      file = open("flowers_data/valfile.txt", "r")
+      for line in file:
+        words = line.split()
+        imgfilename = words[0]
+        label = words[1]
+        self.imgfilenames.append(imgfilename)
+        self.labels.append(label)
+      file.close()
+
     elif trvaltest==2:
-      #load test data
-      #TODO
+      # load testing data
+      file = open("flowers_data/valfile.txt", "r")
+      for line in file:
+        words = line.split()
+        imgfilename = words[0]
+        label = words[1]
+        self.imgfilenames.append(imgfilename)
+        self.labels.append(label)
+      file.close()
+
     else:
-      #TODO: print some error + exit() or an exception
+      raise Exception(f"Invalid input for trvaltest (expected 0,1,2, got {trvaltest}).")       
 
   def __len__(self):
-      #TODO
-      return None
+      return len(self.labels)
 
   def __getitem__(self, idx):
 
-    #TODO
+    filename = self.imgfilenames[idx]
+    label = self.labels[idx]
+    image = Image.open(filename)
+    if self.transform:
+      image = self.transform(image)
     sample = {'image': image, 'label': label, 'filename': filename}
 
     return sample
@@ -59,7 +90,18 @@ def train_epoch(model,  trainloader,  losscriterion, device, optimizer ):
  
     losses = list()
     for batch_idx, data in enumerate(trainloader):
-      #TODO trains the model
+      imgs = data["image"].to(device)
+      lbls = data["label"].to(device)
+
+      # Forward pass
+      preds = model(imgs)
+      loss = losscriterion(preds, lbls)
+      losses.append(loss)
+
+      # Backprop
+      losscriterion.backward()
+      optimizer.step()
+      optimizer.zero_grad()
 
     return np.mean(losses)
 
@@ -74,10 +116,18 @@ def evaluate_acc(model, dataloader, losscriterion, device):
     
     with torch.no_grad():
       for ctr, data in enumerate(dataloader):
-        #TODO
+        imgs = data["image"].to(device)
+        lbls = data["label"].to(device)
         #computes predictions on samples from the dataloader
-        # computes accuracy, to count how many samples, you can just sum up labels.shape[0]
+        preds = model(imgs)
+        loss = losscriterion(preds, lbls)
+        losses.append(loss)
 
+        # computes accuracy, to count how many samples, you can just sum up labels.shape[0]
+        corrects = torch.sum(preds == labels.data) / float(labels.shape[0])
+        accuracy = accuracy * (curcount / float(curcount + labels.shape[0])) + corrects.float() * (
+                    labels.shape[0] / float(curcount + labels.shape[0]))
+        curcount += labels.shape[0]
 
     return accuracy.item() , np.mean(losses)
 
@@ -115,9 +165,8 @@ def runstuff_finetunealllayers():
   #someparameters
   batchsize_tr=16
   batchsize_test=16
-  maxnumepochs=2 #TODO can change when code runs here
+  maxnumepochs=2 
 
-  #TODO depends on what you can use
   device= torch.device('cpu') #torch.device('cuda')
 
   numcl=102
@@ -138,27 +187,23 @@ def runstuff_finetunealllayers():
           transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
       ])
   
-  #TODO
   datasets={}
-  datasets['train']= None
-  datasets['val']= None
-  datasets['test']= None
+  datasets['train'] = dataset_flowers(root_dir="/home/adrian/iris-master/in4310/ukesoppgaver/uke5", trvaltest=0, transform=data_transforms["train"])
+  datasets['val'] = dataset_flowers(root_dir="/home/adrian/iris-master/in4310/ukesoppgaver/uke5", trvaltest=1, transform=data_transforms["val"])
+  datasets['test'] = dataset_flowers(root_dir="/home/adrian/iris-master/in4310/ukesoppgaver/uke5", trvaltest=2, transform=data_transforms["test"])
 
-  #TODO
   dataloaders={}
-  dataloaders['train']= None
-  dataloaders['val']= None
-  dataloaders['test']=None
-  
+  dataloaders['train'] = DataLoader(datasets["train"], shuffle=True)
+  dataloaders['val'] = DataLoader(datasets["val"], shuffle=True)
+  dataloaders['test'] = DataLoader(datasets["test"], shuffle=True)
 
-  #TODO
   #model
-  model = None
+  model = resnet18()
 
   model.to(device)
 
   #TODO
-  criterion = None
+  criterion = nn.CrossEntropyLoss()
 
   lrates=[0.01, 0.001]
 
@@ -167,8 +212,7 @@ def runstuff_finetunealllayers():
   bestmeasure = None
   for lr in lrates:
 
-    #TODO
-    optimizer = None
+    optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     
     best_epoch, best_perfmeasure, bestweights = train_model_nocv_sizes(dataloader_train = dataloaders['train'], dataloader_test = dataloaders['val'] ,  model = model ,  losscriterion = criterion , optimizer = optimizer, scheduler = None, num_epochs = maxnumepochs , device = device)
 
