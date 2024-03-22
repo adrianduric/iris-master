@@ -16,3 +16,18 @@ median(data)
 # Gjennomsnittet er den gjennomsnittlige verdien av alle datapunktene.
 # Medianen er den midterste verdien i datasettet.
 
+sd(data)
+IQR(data)
+
+# Standardavvik forteller om forventet avvik for et datapunkt i datasettet,
+# fra gjennomsnittsverdien i datasettet.
+# IQR (inter-quartile range) gir lengden på spennet fra starten av andre
+# kvartil til slutten av tredje, dvs. IQR = Q_3 - Q_1.
+
+result = t.test(data)
+result
+
+# 95% KI: (23.57059 28.85365)
+# Gitt at den sanne gjennomsnittsverdien i populasjonen dataene er fra er
+# lik 33.02, vil det si at dette datasettet er eksempel på de siste 5% av
+# tilfellene hvor konfidensintervallet ikke inneholder sann mu.
