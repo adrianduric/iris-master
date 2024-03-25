@@ -1,3 +1,8 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+---
 # STK4900 V24 \| Obligatorisk innlevering 1 \| Adrian Duric
 
 ## Oppgave 1
@@ -65,11 +70,172 @@ z
 pnorm(z)
 ```
 
-```{r}
-n = 25
-x_avg = 172
+## Oppgave 2
 
-z = (x_avg - mu_m) / (sigma_m / sqrt(n))
-z
-pnorm(z)
+### a)
+
+```{r}
+babies = matrix(scan("mothersbabies.txt",skip=7),byrow=T,ncol=7)
+y = babies[ ,1] # birthweight, in kg
+x1 = babies[ ,2] # mother’s weight prior to pregnancy
+x2 = babies[ ,3] # age
+x3 = babies[ ,4] # indicator for smoking (1 for yes, 0 for no)
+x4 = babies[ ,5] # indicator for ethnic 1, black
+x5 = babies[ ,6] # indicator for ethnic 2, neither white nor black
+x6 = babies[ ,7] # indicator for ethnic 0, white
+
+ysmoke = y[x3 == 1]
+ynosmoke = y[x3 == 0]
+
+# Lager boxplots
+boxplot(ynosmoke, ysmoke)
 ```
+
+Fra boxplottene ser vi at vekten til babyen generelt sett er høyere for ikkerøykende mødre enn for røykende; medianvekten er høyere, samt de resterende kvartilverdiene og spesielt maksimalverdien.
+
+### b)
+
+For å kunne utføre t-testen antar vi at data fra de to gruppene er samplet fra normalfordelinger med potensielt forskjellige middelverdier og standardavvik. Vi antar at de sanne middelverdiene og standardavvikene ikke er kjent, men estimeres ut fra dataene.
+
+```{r}
+t.test(ysmoke, ynosmoke)
+```
+
+Vi leser fra t-testen at P-verdien blir 0.00743, som er lavt (under 95% konfidensnivå). Vi kan derfor forkaste nullhypotesen, og heller gå ut fra at det er en forskjell i gjennomsnittlig babyvekt mellom mødre som røyker og ikke.
+Vi leser også fra utskriften at konfidensintervallet er $[-0.48695979, -0.07646677]$.
+
+### c)
+
+Lager boxplots for de tre gruppene:
+
+```{r}
+yethnic0 = y[x6 == 1]
+yethnic1 = y[x4 == 1]
+yethnic2 = y[x5 == 1]
+
+boxplot(yethnic0, yethnic1, yethnic2)
+```
+
+Gjennomfører ANOVA ved å først lage en vektor som inkluderer alle de 3 kategoriske variablene, og deretter bruke `aov`. Vi antar at data fra de tre kategoriene er samplet for normalfordelinger med ukjente og potensielt ulike middelverdier, men i dette tilfellet antar vi at de har lik varians.
+
+```{r}
+x_ethnic = ifelse(x4 == 1, 1, 0)
+x_ethnic = ifelse(x5 == 1, 2, x_ethnic)
+x_ethnic = factor(x_ethnic)
+aov_ethnic = aov(y~x_ethnic)
+summary(aov_ethnic)
+```
+
+Vi finner at P-verdien for den funnede F-scoren er så lav at vi kan forkaste nullhypotesen ($P = 0.00788$), og heller konkludere med den alternative hypotesen, altså at den gjennomsnittlige fødevekten for de tre gruppene er forskjellige.
+
+### d)
+
+Plotter alder på moren mot vekt på barnet:
+
+```{r}
+plot(x2, y, xlab="age", ylab="weight")
+```
+
+Regner korrelasjon mellom de to variablene, og regner ut konfidensintervall:
+
+```{r}
+cor.test(x2, y)
+```
+
+Fra utskriften leser vi at korrelasjonen er på ca. 9%, altså er en eventuell korrelasjon svak. Siden 95%-konfidensintervallet $[-0.05355077, 0.22965101]$ inneholder 0, kan vi ikke si med høy konfidens at det er en korrelasjon mellom de to variablene i det hele tatt, slik også den relativt høye P-verdien forteller oss.
+
+### e)
+
+```{r}
+fit = lm(y ~ x1 + x2 + x3)
+summary(fit)
+```
+
+Siden vi bruker mer enn 1 variabel, leser jeg av for den justerte R-verdien: `Adjusted R-squared:  0.05479`.
+Den er lav, og kan tolkes som at kun ca. 5,5% av variasjonen i $y$ (fødselsvekt) forklares av $x_1$, $x_2$ og $x_3$ (mors vekt før fødselen, alder og røyking).
+
+Beregner konfidensintervaller for $\beta_1$, $\beta_2$ og $\beta_3$:
+
+```{r}
+beta1 = 0.008860
+beta2 = 0.007094
+beta3 = -0.267215
+se_beta1 = 0.003791
+se_beta2 = 0.009925
+se_beta3 = 0.105802
+
+cval = qt(0.975, length(y) - 2)
+
+beta1_conf = c(beta1 - cval*se_beta1, beta1 + cval*se_beta1)
+beta2_conf = c(beta2 - cval*se_beta2, beta2 + cval*se_beta2)
+beta3_conf = c(beta3 - cval*se_beta3, beta3 + cval*se_beta3)
+
+cat("95% konfidensintervall for beta1: (", beta1_conf, ")\n")
+cat("95% konfidensintervall for beta2: (", beta2_conf, ")\n")
+cat("95% konfidensintervall for beta3: (", beta3_conf, ")\n")
+```
+
+Som vi også kunne tolke fra å se på P-verdiene i oppsummeringen over, ser vi her at $b_2$ er den eneste koeffisienten med et konfidensintervall som inneholder 0. Det vil si at vi ikke kan fastslå at alder har noen virkning på fødselsvekten, slik vi også så i d).
+
+### f)
+
+```{r}
+fit = lm(y ~ x1 + x2 + x3 + x4 + x5)
+summary(fit)
+```
+
+Fra å legge til $x_4$ og $x_5$ som variabler, ser vi at R-verdien har økt, som vil si at etnisiteten til mødrene også bidrar til å forklare variasjonen i barnets fødselsvekt. Vi ser også at de to koeffisientene $\beta_4$ og $\beta_5$ har lave P-verdier, ergo kan man med høy konfidens fastslå at etnisiteten til moren påvirker fødselsvekten til barnet, slik vi kunne forvente fra resultatene i c).
+
+### g)
+
+Resultater for hvit etnisitet:
+
+```{r}
+fit = lm(yethnic0 ~ x3[x6 == 1])
+summary(fit)
+```
+
+Resultater for svart etnisitet:
+
+```{r}
+fit = lm(yethnic1 ~ x3[x4 == 1])
+summary(fit)
+```
+
+Resultater for verken hvit eller svart etnisitet:
+
+```{r}
+fit = lm(yethnic2 ~ x3[x5 == 1])
+summary(fit)
+```
+
+Fra utskriftene og resultatene fra hypotesetestene for $\beta_3$ i hvert spesifikke tilfelle, ser man at det kun er for kvinner av hvit etnisitet at man har et statistisk signifikant resultat. Det vil si at man kan si med høy konfidens at røyking påvirker fødselsvekten for hvite mødre som røyker (den synker, som vi kan lese av den estimerte koeffisienten). Også svarte og verken svarte eller hvite mødre har $\beta_3$-koeffisienter som er estimerte til å være negative, som altså tilsier at røyking senker fødselsvekten, men fordi disse koeffisientene har høye tilhørende P-verdier kan man ikke konkludere med at denne effekten nødvendigvis er reell for disse etnisitetene.
+
+### h)
+
+Predikerer på den fulle regresjonsmodellen (som inkluderer alle prediktorene):
+
+```{r}
+fit = lm(y ~ x1 + x2 + x3 + x4 + x5)
+pred = predict(fit, newdata=data.frame(x1=60, x2=25, x3=1, x4=0, x5=0))
+cat("Forventet fødselsvekt for babyen til Mrs. Jones:", pred, "kg")
+```
+
+```{r}
+fit = lm(y ~ x1 + x2 + x3 + x4 + x5)
+pred = predict(fit, newdata=data.frame(x1=60, x2=25, x3=0, x4=0, x5=0))
+cat("Forventet fødselsvekt for babyen til Mrs. Smith:", pred, "kg")
+```
+
+
+
+
+
+
+
+
+
+
+
+
+
