@@ -1,0 +1,75 @@
+# STK4900 V24 \| Obligatorisk innlevering 1 \| Adrian Duric
+
+## Oppgave 1
+
+### a)
+
+For å finne det forventede antallet menn høyere enn 2 meter, finner vi først sannsynligheten for at en tilfeldig trukket mann er \>200cm høy. Så ganger vi det med antallet samples (1 million) for å få forventet antall.
+
+```{r}
+mu_w = 168
+sigma_w = 6.5
+mu_m = 181
+sigma_m = 8
+
+# Finner sannsynlighet for å trekke en mann over 200cm
+prob = 1 - pnorm(200, mean=mu_m, sd=sigma_m)
+
+# Finner forventet antall menn over 200cm per 1M menn
+prob = prob * 1000000
+cat("Forventet antall menn over 200cm per 1 million menn:", prob)
+```
+
+### b)
+
+Vi bruker at $P(a \le X \le b) = F(b) - F(a)$ for å finne sannsynligheten for at én tilfeldig trukket kvinnes høyde er innenfor intervallet $[155.26, 180.74]$. Det er rimelig å anta at de 10 tilfeldig trukkede kvinnenes høyder er uavhengige av hverandre, så vi opphøyer sannsynligheten med antall sampler (n=10) for å finne sannsynligheten for at alle de 10 er innenfor intervallet.
+
+```{r}
+# Regner sannsynlighet for at en tilfeldig trukket kvinne har høyde innenfor intervallet
+prob = pnorm(180.74, mean=mu_w, sd=sigma_w) - pnorm(155.26, mean=mu_w, sd=sigma_w)
+
+# Regner sannsynlighet for å trekke 10 kvinner innenfor intervallet
+prob = prob^10
+cat("Sannsynlighet for å trekke 10 kvinner med høyde i [155.26, 180.74]:", prob)
+```
+
+### c)
+
+Vi bruker at $E(a + \sum\limits_{i=1}^n b_i X_i) = a + \sum\limits_{i=1}^n b_i E(X_i)$ og at $V( a + \sum\limits_{i=1}^n b_i X_i) = \sum\limits_{i=1}^n b_i^2 V(X_i)$ i det følgende:
+
+Vi definerer kvinnens høyde som $K$ og mannens som $M$, og antar at disse er uavhengige. Så regner vi ut $P(K > M)$ eller $P(Z > 0)$, hvor $Z = K - M$. Fordi vi har middelverdi og standardavvik for kvinner og menn, kan vi finne de samme verdiene for $Z$.
+
+```{r}
+# Finner middelverdi og standardavvik for differanse mellom kvinner og menn
+mu_z = mu_w - mu_m
+sigma_z = sqrt(sigma_w^2 + sigma_m^2)
+
+# Finner sannsynligheten for at kvinnens høyde er større enn mannens, dvs. P(Z > 0)
+prob = 1 - pnorm(0, mean=mu_z, sd=sigma_z)
+cat("Sannsynlighet for at kvinnen er høyere enn mannen:", prob)
+```
+
+### d)
+
+Siden utvalget består av kun kvinner eller menn, kan vi hypoteseteste ut fra antagelsen om at det målte gjennomsnittet $\overline{x}$ er nærmere $\mu_w$ enn $\mu_m$ dersom nullhypotesen stemmer. Vi har altså $H_0: \overline{x} < \frac{\mu_w + \mu_m}{2}$ og $H_A: \overline{x} \geq \frac{\mu_w + \mu_m}{2}$.
+
+```{r}
+n = 25
+x_avg = 172
+mid = (mu_w + mu_m) / 2
+
+# Beregner z-statistikk
+z = (x_avg - mid) / (sigma_w / sqrt(n))
+z
+# Beregner P-verdien (P(Z < z))
+pnorm(z)
+```
+
+```{r}
+n = 25
+x_avg = 172
+
+z = (x_avg - mu_m) / (sigma_m / sqrt(n))
+z
+pnorm(z)
+```
