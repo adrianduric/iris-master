@@ -56,7 +56,7 @@ cat("Sannsynlighet for at kvinnen er høyere enn mannen:", prob)
 
 ### d)
 
-Siden utvalget består av kun kvinner eller menn, kan vi hypoteseteste ut fra antagelsen om at det målte gjennomsnittet $\overline{x}$ er nærmere $\mu_w$ enn $\mu_m$ dersom nullhypotesen stemmer. Vi har altså $H_0: \overline{x} < \frac{\mu_w + \mu_m}{2}$ og $H_A: \overline{x} \geq \frac{\mu_w + \mu_m}{2}$.
+Siden utvalget består av kun kvinner eller menn, kan vi hypoteseteste ut fra nullhypotesen om at det målte gjennomsnittet $\overline{x}$ er nærmere $\mu_w$ enn $\mu_m$. Vi har altså $H_0: \overline{x} < \frac{\mu_w + \mu_m}{2}$ og $H_A: \overline{x} \geq \frac{\mu_w + \mu_m}{2}$.
 
 ```{r}
 n = 25
@@ -74,7 +74,10 @@ pnorm(z)
 
 ### a)
 
+Lager boxplots for røykende og ikke-røykende mødre:
+
 ```{r}
+# Forbereder data
 babies = matrix(scan("mothersbabies.txt",skip=7),byrow=T,ncol=7)
 y = babies[ ,1] # birthweight, in kg
 x1 = babies[ ,2] # mother’s weight prior to pregnancy
@@ -98,6 +101,7 @@ Fra boxplottene ser vi at vekten til babyen generelt sett er høyere for ikkerø
 For å kunne utføre t-testen antar vi at data fra de to gruppene er samplet fra normalfordelinger med potensielt forskjellige middelverdier og standardavvik. Vi antar at de sanne middelverdiene og standardavvikene ikke er kjent, men estimeres ut fra dataene.
 
 ```{r}
+# Gjennomfører t-test
 t.test(ysmoke, ynosmoke)
 ```
 
@@ -109,19 +113,24 @@ Vi leser også fra utskriften at konfidensintervallet er $[-0.48695979, -0.07646
 Lager boxplots for de tre gruppene:
 
 ```{r}
+# Sorterer ut gruppene
 yethnic0 = y[x6 == 1]
 yethnic1 = y[x4 == 1]
 yethnic2 = y[x5 == 1]
 
+# Lager boxplots
 boxplot(yethnic0, yethnic1, yethnic2)
 ```
 
 Gjennomfører ANOVA ved å først lage en vektor som inkluderer alle de 3 kategoriske variablene, og deretter bruke `aov`. Vi antar at data fra de tre kategoriene er samplet for normalfordelinger med ukjente og potensielt ulike middelverdier, men i dette tilfellet antar vi at de har lik varians.
 
 ```{r}
+# Lager kategorisk vektor som kombinerer de tre gruppene
 x_ethnic = ifelse(x4 == 1, 1, 0)
 x_ethnic = ifelse(x5 == 1, 2, x_ethnic)
 x_ethnic = factor(x_ethnic)
+
+# Gjennomfører ANOVA
 aov_ethnic = aov(y~x_ethnic)
 summary(aov_ethnic)
 ```
@@ -133,12 +142,14 @@ Vi finner at P-verdien for den funnede F-scoren er så lav at vi kan forkaste nu
 Plotter alder på moren mot vekt på barnet:
 
 ```{r}
+# Plotter alder vs. fødselsvekt
 plot(x2, y, xlab="age", ylab="weight")
 ```
 
 Regner korrelasjon mellom de to variablene, og regner ut konfidensintervall:
 
 ```{r}
+# Regner ut korrelasjon
 cor.test(x2, y)
 ```
 
@@ -146,7 +157,10 @@ Fra utskriften leser vi at korrelasjonen er på ca. 9%, altså er en eventuell k
 
 ### e)
 
+Lager regresjonsmodellen:
+
 ```{r}
+# Lager regresjonsmodell
 fit = lm(y ~ x1 + x2 + x3)
 summary(fit)
 ```
@@ -157,6 +171,7 @@ Den er lav, og kan tolkes som at kun ca. 5,5% av variasjonen i $y$ (fødselsvekt
 Beregner konfidensintervaller for $\beta_1$, $\beta_2$ og $\beta_3$:
 
 ```{r}
+# Fyller inn formelverdier
 beta1 = 0.008860
 beta2 = 0.007094
 beta3 = -0.267215
@@ -166,6 +181,7 @@ se_beta3 = 0.105802
 
 cval = qt(0.975, length(y) - 2)
 
+# Beregner konfidensintervaller
 beta1_conf = c(beta1 - cval*se_beta1, beta1 + cval*se_beta1)
 beta2_conf = c(beta2 - cval*se_beta2, beta2 + cval*se_beta2)
 beta3_conf = c(beta3 - cval*se_beta3, beta3 + cval*se_beta3)
@@ -179,7 +195,10 @@ Som vi også kunne tolke fra å se på P-verdiene i oppsummeringen over, ser vi 
 
 ### f)
 
+Lager regresjonsmodellen:
+
 ```{r}
+# Lager regresjonsmodell
 fit = lm(y ~ x1 + x2 + x3 + x4 + x5)
 summary(fit)
 ```
@@ -191,6 +210,7 @@ Fra å legge til $x_4$ og $x_5$ som variabler, ser vi at R-verdien har økt, som
 Resultater for hvit etnisitet:
 
 ```{r}
+# Lager regresjonsmodell for hvit etnisitet
 fit = lm(yethnic0 ~ x3[x6 == 1])
 summary(fit)
 ```
@@ -198,6 +218,7 @@ summary(fit)
 Resultater for svart etnisitet:
 
 ```{r}
+# Lager regresjonsmodell for svart etnisitet
 fit = lm(yethnic1 ~ x3[x4 == 1])
 summary(fit)
 ```
@@ -205,6 +226,7 @@ summary(fit)
 Resultater for verken hvit eller svart etnisitet:
 
 ```{r}
+# Lager regresjonsmodell for verken hvit eller svart etnisitet
 fit = lm(yethnic2 ~ x3[x5 == 1])
 summary(fit)
 ```
@@ -216,26 +238,15 @@ Fra utskriftene og resultatene fra hypotesetestene for $\beta_3$ i hvert spesifi
 Predikerer på den fulle regresjonsmodellen (som inkluderer alle prediktorene):
 
 ```{r}
+# Lager regresjonsmodell og predikerer på den
 fit = lm(y ~ x1 + x2 + x3 + x4 + x5)
 pred = predict(fit, newdata=data.frame(x1=60, x2=25, x3=1, x4=0, x5=0))
 cat("Forventet fødselsvekt for babyen til Mrs. Jones:", pred, "kg")
 ```
 
 ```{r}
+# Lager regresjonsmodell og predikerer på den
 fit = lm(y ~ x1 + x2 + x3 + x4 + x5)
 pred = predict(fit, newdata=data.frame(x1=60, x2=25, x3=0, x4=0, x5=0))
 cat("Forventet fødselsvekt for babyen til Mrs. Smith:", pred, "kg")
 ```
-
-
-
-
-
-
-
-
-
-
-
-
-
