@@ -1,3 +1,9 @@
+---
+output:
+  pdf_document: default
+  html_document: default
+  word_document: default
+---
 # STK4900 V24 \| Obligatorisk innlevering 1 \| Adrian Duric
 
 ## Oppgave 1
@@ -62,10 +68,10 @@ x_avg = 172
 z = (x_avg - mu_w) / (sigma_w / sqrt(n))
 
 # Beregner den ensidede P-verdien P(Z > z) = 1 - P(Z <= z)
-cat("P-verdi:", 1 - pnorm(z))
+cat("P-verdi (H0: alle de 25 menneskene er kvinner):", 1 - pnorm(z))
 ```
 
-Dersom alle de 25 menneskene var bare kvinner, var altså $\overline{x} = 172cm$ en veldig usannsynlig måling (ca 0.1% sanns. for at den ville forekommet). Vanligvis ville det vært naturlig å forkaste nullhypotesen og konkludere med den alternative hypotesen om at alle er menn, men det virker ikke helt intuitivt, siden $\overline{x}$ jo ligger nærmere $\mu_w$ enn $\mu_m$.
+Dersom alle de 25 menneskene var bare kvinner, var altså $\overline{x} = 172cm$ en veldig usannsynlig måling (ca 0.1% sanns. for at den ville forekommet). Hadde man bare hatt informasjon om tetthetsfordelingen til kvinner, ville det vært naturlig å forkaste nullhypotesen og konkludere med den alternative hypotesen om at alle er menn. Men det virker ikke helt intuitivt, siden $\overline{x}$ jo ligger nærmere $\mu_w$ enn $\mu_m$.
 
 Vi ser dette tydeligere ved å gjøre ting andre veien, altså anta nullhypotesen $H_0: \overline{x} = \mu_m$:
 ```{r}
@@ -76,27 +82,12 @@ x_avg = 172
 z = (x_avg - mu_m) / (sigma_m / sqrt(n))
 
 # Beregner den ensidede P-verdien P(Z <= z)
-cat("P-verdi:", pnorm(z))
+cat("P-verdi (H0: alle de 25 menneskene er menn):", pnorm(z))
 ```
 
-Her får vi en P-verdi som er flere størrelsesordener lavere enn tidligere, og som derfor også burde forkastes. Men om begge nullhypotesene forkastes, ville ikke oppgavens vilkår vært innfridd; vi vet jo at alle de 25 menneskene er enten bare menn eller bare kvinner. Altså må $\overline{x}$ "stamme fra" enten $\mu_w$ eller $\mu_m$, gitt at menneskene er samplet fra en av de gitte normalfordelingene for enten menn eller kvinner alle sammen. Det vi uansett kan konkludere med, er at den gitte målingen av $\overline{x}$ var veldig usannsynlig å forekomme, uansett hvilket kjønn de 25 menneskene har.
+Her får vi en P-verdi som er flere størrelsesordener lavere enn tidligere, og som derfor også burde forkastes. Men om begge nullhypotesene forkastes, ville ikke oppgavens vilkår vært innfridd; vi vet jo at alle de 25 menneskene er enten bare menn eller bare kvinner. Altså må $\overline{x}$ "stamme fra" enten $\mu_w$ eller $\mu_m$, gitt at menneskene er samplet fra en av de gitte normalfordelingene for enten menn eller kvinner alle sammen.
 
-Vi prøver nå å bruke informasjonen vi har gitt ved å teste ut fra nullhypotesen om at det målte gjennomsnittet $\overline{x}$ er nærmere $\mu_w$ enn $\mu_m$. Vi har altså $H_0: \frac{\overline{x} + \mu_w }{2} < \frac{\mu_w + \mu_m}{2}$ og $H_A: \frac{\overline{x} + \mu_w }{2} \geq \frac{\mu_w + \mu_m}{2}$.
-
-```{r}
-n = 25
-x_avg = 172
-
-# Definerer midtpunkt
-mid = (mu_w + mu_m) / 2
-
-# Beregner z-statistikk
-z = (x_avg - mid) / (sqrt(sigma_w^2 + sigma_m^2) / sqrt(n))
-z = ((x_avg - mu_w) - (x_avg - mid)) / (sigma_w / sqrt(n))
-z
-# Beregner den ensidede P-verdien P(Z <= z)
-cat("P-verdi:", pnorm(z))
-```
+Det vi uansett kan konkludere med, er at den gitte målingen av $\overline{x}$ var veldig usannsynlig å forekomme uansett hvilket kjønn de 25 menneskene har. Likevel leser vi fra størrelsesordenen på til P-verdiene at det er betydelig mer sannsynlig at de er kvinner enn at de er menn. Eksempelet viser også at hvilken informasjon man har er relevant for hvordan man skal tolke en P-verdi (hadde vi ikke visst at alle er av samme kjønn, hadde det vært lett å si at gruppen på 25 personer mest sannsynlig består av både menn og kvinner).
 
 ## Oppgave 2
 
