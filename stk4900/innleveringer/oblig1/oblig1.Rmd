@@ -4,6 +4,7 @@ output:
   html_document: default
   word_document: default
 ---
+
 # STK4900 V24 \| Obligatorisk innlevering 1 \| Adrian Duric
 
 ## Oppgave 1
@@ -27,6 +28,15 @@ cat("Forventet antall menn over 200cm per 1 million menn:", prob)
 ```
 
 ### b)
+
+Regner ut de kumulative sannsynlighetene $F(155.26)$ og $F(180.74)$ for kvinnenes normalfordeling:
+
+```{r}
+cat("Sannsynlighet for å trekke 1 kvinne med høyde <= 155.26cm:", pnorm(155.26, mean=mu_w, sd=sigma_w), "\n")
+cat("Sannsynlighet for å trekke 1 kvinne med høyde <= 180.74cm:", pnorm(180.74, mean=mu_w, sd=sigma_w))
+```
+
+Fra utskriften ser vi at de to verdiene gir oss nesten nøyaktig 2.5%- og 97.5%-persentilene for høyden til kvinner på øya. Det vil si at 95% av kvinner samplet fra fordelingen vil være mellom disse to verdiene.
 
 Vi bruker at $P(a \le X \le b) = F(b) - F(a)$ for å finne sannsynligheten for at én tilfeldig trukket kvinnes høyde er innenfor intervallet $[155.26, 180.74]$. Det er rimelig å anta at de 10 tilfeldig trukkede kvinnenes høyder er uavhengige av hverandre, så vi opphøyer sannsynligheten med antall sampler (n=10) for å finne sannsynligheten for at alle de 10 er innenfor intervallet.
 
@@ -60,6 +70,7 @@ cat("Sannsynlighet for at kvinnen er høyere enn mannen:", prob)
 Siden vi vet at alle samplene er enten bare menn eller bare kvinner, kan vi uttrykke null- og den alternative hypotesen som $H_0:$ alle de 25 menneskene er kvinner, og $H_A:$ alle de 25 menneskene er menn. Å bestemme hvordan disse setningene skal uttrykkes matematisk, er derimot ikke helt rett frem.
 
 Forsøker først å uttrykke nullhypotesen som $H_0: \overline{x} = \mu_w$:
+
 ```{r}
 n = 25
 x_avg = 172
@@ -74,6 +85,7 @@ cat("P-verdi (H0: alle de 25 menneskene er kvinner):", 1 - pnorm(z))
 Dersom alle de 25 menneskene var bare kvinner, var altså $\overline{x} = 172cm$ en veldig usannsynlig måling (ca 0.1% sanns. for at den ville forekommet). Hadde man bare hatt informasjon om tetthetsfordelingen til kvinner, ville det vært naturlig å forkaste nullhypotesen og konkludere med den alternative hypotesen om at alle er menn. Men det virker ikke helt intuitivt, siden $\overline{x}$ jo ligger nærmere $\mu_w$ enn $\mu_m$.
 
 Vi ser dette tydeligere ved å gjøre ting andre veien, altså anta nullhypotesen $H_0: \overline{x} = \mu_m$:
+
 ```{r}
 n = 25
 x_avg = 172
@@ -113,19 +125,18 @@ ynosmoke = y[x3 == 0]
 boxplot(ynosmoke, ysmoke)
 ```
 
-Fra boxplottene ser vi at vekten til babyen generelt sett er høyere for ikkerøykende mødre enn for røykende; medianvekten er høyere, samt de resterende kvartilverdiene og spesielt maksimalverdien.
+Fra boxplottene ser vi antydninger til at vekten til babyen generelt sett er høyere for ikkerøykende mødre enn for røykende; medianvekten er høyere, samt de resterende kvartilverdiene og spesielt maksimalverdien.
 
 ### b)
 
-For å kunne utføre t-testen antar vi at data fra de to gruppene er samplet fra normalfordelinger med potensielt forskjellige middelverdier og standardavvik. Vi antar at de sanne middelverdiene og standardavvikene ikke er kjent, men estimeres ut fra dataene.
+For å kunne utføre t-testen antar vi at data fra de to gruppene er samplet fra normalfordelinger med potensielt forskjellige middelverdier og standardavvik. Vi antar at de sanne middelverdiene og standardavvikene ikke er kjente, men estimeres ut fra dataene.
 
 ```{r}
 # Gjennomfører t-test
 t.test(ysmoke, ynosmoke)
 ```
 
-Vi leser fra t-testen at P-verdien blir 0.00743, som er lavt (under 95% konfidensnivå). Vi kan derfor forkaste nullhypotesen, og heller gå ut fra at det er en forskjell i gjennomsnittlig babyvekt mellom mødre som røyker og ikke.
-Vi leser også fra utskriften at konfidensintervallet er $[-0.48695979, -0.07646677]$.
+Vi leser fra t-testen at P-verdien blir 0.00743, som er lavt (under 95% konfidensnivå). Vi kan derfor forkaste nullhypotesen, og heller gå ut fra at det er en forskjell i gjennomsnittlig babyvekt mellom mødre som røyker og ikke. Vi leser også fra utskriften at konfidensintervallet er $[-0.48695979, -0.07646677]$.
 
 ### c)
 
@@ -141,7 +152,7 @@ yethnic2 = y[x5 == 1]
 boxplot(yethnic0, yethnic1, yethnic2)
 ```
 
-Gjennomfører ANOVA ved å først lage en vektor som inkluderer alle de 3 kategoriske variablene, og deretter bruke `aov`. Vi antar at data fra de tre kategoriene er samplet for normalfordelinger med ukjente og potensielt ulike middelverdier, men i dette tilfellet antar vi at de har lik varians.
+Gjennomfører ANOVA ved å først lage en vektor som inkluderer alle de 3 kategoriske variablene, og deretter bruke `aov`. Vi antar at data fra de tre kategoriene er samplet for normalfordelinger med ukjente og potensielt ulike middelverdier.
 
 ```{r}
 # Lager kategorisk vektor som kombinerer de tre gruppene
@@ -184,8 +195,7 @@ fit = lm(y ~ x1 + x2 + x3)
 summary(fit)
 ```
 
-Siden vi bruker mer enn 1 variabel, leser jeg av for den justerte R-verdien: `Adjusted R-squared:  0.05479`.
-Den er lav, og kan tolkes som at kun ca. 5,5% av variasjonen i $y$ (fødselsvekt) forklares av $x_1$, $x_2$ og $x_3$ (mors vekt før fødselen, alder og røyking).
+Siden vi bruker mer enn 1 variabel, leser jeg av for den justerte R-verdien: `Adjusted R-squared:  0.05479`. Den er lav, og kan tolkes som at kun ca. 5,5% av variasjonen i $y$ (fødselsvekt) forklares av $x_1$, $x_2$ og $x_3$ (mors vekt før fødselen, alder og røyking).
 
 Beregner konfidensintervaller for $\beta_1$, $\beta_2$ og $\beta_3$:
 
@@ -198,7 +208,7 @@ se_beta1 = 0.003791
 se_beta2 = 0.009925
 se_beta3 = 0.105802
 
-cval = qt(0.975, length(y) - 2)
+cval = qt(0.975, df=length(y) - 4)
 
 # Beregner konfidensintervaller
 beta1_conf = c(beta1 - cval*se_beta1, beta1 + cval*se_beta1)
