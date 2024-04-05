@@ -13,8 +13,11 @@ from torchvision.models import resnet18
 import time
 import os
 
+from tqdm import tqdm
+
 #import skimage.io
-from PIL import Image
+from PIL import Image, ImageFile
+ImageFile.LOAD_TRUNCATED_IMAGES = True
 
 from torch.utils.data import Dataset, DataLoader
 from torchvision import transforms, utils
@@ -38,8 +41,8 @@ class dataset_flowers(Dataset):
       file = open("flowers_data/trainfile.txt", "r")
       for line in file:
         words = line.split()
-        imgfilename = words[0]
-        label = words[1]
+        imgfilename = os.path.join(self.images_dir, words[0])
+        label = int(words[1])
         self.imgfilenames.append(imgfilename)
         self.labels.append(label)
       file.close()
@@ -49,8 +52,8 @@ class dataset_flowers(Dataset):
       file = open("flowers_data/valfile.txt", "r")
       for line in file:
         words = line.split()
-        imgfilename = words[0]
-        label = words[1]
+        imgfilename = os.path.join(self.images_dir, words[0])
+        label = int(words[1])
         self.imgfilenames.append(imgfilename)
         self.labels.append(label)
       file.close()
@@ -60,8 +63,8 @@ class dataset_flowers(Dataset):
       file = open("flowers_data/valfile.txt", "r")
       for line in file:
         words = line.split()
-        imgfilename = words[0]
-        label = words[1]
+        imgfilename = os.path.join(self.images_dir, words[0])
+        label = int(words[1])
         self.imgfilenames.append(imgfilename)
         self.labels.append(label)
       file.close()
@@ -89,17 +92,17 @@ def train_epoch(model,  trainloader,  losscriterion, device, optimizer ):
     model.train() # IMPORTANT
  
     losses = list()
-    for batch_idx, data in enumerate(trainloader):
+    for batch_idx, data in enumerate(tqdm(trainloader)):
       imgs = data["image"].to(device)
       lbls = data["label"].to(device)
 
       # Forward pass
       preds = model(imgs)
       loss = losscriterion(preds, lbls)
-      losses.append(loss)
+      losses.append(loss.item())
 
       # Backprop
-      losscriterion.backward()
+      loss.backward()
       optimizer.step()
       optimizer.zero_grad()
 
@@ -115,16 +118,16 @@ def evaluate_acc(model, dataloader, losscriterion, device):
     accuracy = 0
     
     with torch.no_grad():
-      for ctr, data in enumerate(dataloader):
+      for ctr, data in enumerate(tqdm(dataloader)):
         imgs = data["image"].to(device)
-        lbls = data["label"].to(device)
+        labels = data["label"].to(device)
         #computes predictions on samples from the dataloader
         preds = model(imgs)
-        loss = losscriterion(preds, lbls)
-        losses.append(loss)
+        loss = losscriterion(preds, labels)
+        losses.append(loss.item())
 
         # computes accuracy, to count how many samples, you can just sum up labels.shape[0]
-        corrects = torch.sum(preds == labels.data) / float(labels.shape[0])
+        corrects = torch.sum(torch.argmax(preds, dim=1) == labels) / float(labels.shape[0])
         accuracy = accuracy * (curcount / float(curcount + labels.shape[0])) + corrects.float() * (
                     labels.shape[0] / float(curcount + labels.shape[0]))
         curcount += labels.shape[0]
@@ -136,6 +139,7 @@ def train_model_nocv_sizes(dataloader_train, dataloader_test ,  model ,  losscri
 
   best_measure = 0
   best_epoch =-1
+  bestweights = model.state_dict()
 
   for epoch in range(num_epochs):
     print('Epoch {}/{}'.format(epoch, num_epochs - 1))
@@ -151,10 +155,12 @@ def train_model_nocv_sizes(dataloader_train, dataloader_test ,  model ,  losscri
     measure, meanlosses = evaluate_acc(model, dataloader_test, losscriterion, device)
     print(' perfmeasure', measure)
 
-    if measure > best_measure: #higher is better or lower is better?
-      #TODO
-      # save tbe weights of the best model
+    if measure > best_measure:
+      # save the weights of the best model
+      bestweights = model.state_dict()
       # update   best_measure, best_epoch
+      best_measure = measure
+      best_epoch = epoch
 
   return best_epoch, best_measure, bestweights
 
@@ -167,7 +173,7 @@ def runstuff_finetunealllayers():
   batchsize_test=16
   maxnumepochs=2 
 
-  device= torch.device('cpu') #torch.device('cuda')
+  device= torch.device('cuda')
 
   numcl=102
   #transforms
@@ -180,6 +186,13 @@ def runstuff_finetunealllayers():
           transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
       ])
   data_transforms['val']=transforms.Compose([
+          transforms.Resize(224),
+          transforms.CenterCrop(224),
+          transforms.RandomHorizontalFlip(),
+          transforms.ToTensor(),
+          transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
+      ])
+  data_transforms['test']=transforms.Compose([
           transforms.Resize(224),
           transforms.CenterCrop(224),
           transforms.RandomHorizontalFlip(),
@@ -202,7 +215,6 @@ def runstuff_finetunealllayers():
 
   model.to(device)
 
-  #TODO
   criterion = nn.CrossEntropyLoss()
 
   lrates=[0.01, 0.001]
@@ -221,9 +233,10 @@ def runstuff_finetunealllayers():
       weights_chosen = bestweights
       bestmeasure = best_perfmeasure
      
-    elif True:  #TODO what criterion here?
-      #TODO
-      pass
+    elif best_perfmeasure > bestmeasure:
+      best_hyperparameter = lr
+      weights_chosen = bestweights
+      bestmeasure = best_perfmeasure
 
   model.load_state_dict(weights_chosen)
 
