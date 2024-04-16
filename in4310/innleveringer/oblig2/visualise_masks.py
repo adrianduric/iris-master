@@ -6,6 +6,7 @@ from torchvision.utils import save_image
 
 from resnet_unet import TwoEncodersOneDecoder
 
+import tqdm
 
 def visualise_segmentation(model_path, destination_path, dataloader):
     """
@@ -27,28 +28,28 @@ def visualise_segmentation(model_path, destination_path, dataloader):
     destination_path = Path(destination_path)
     destination_path.mkdir(exist_ok=True)
     for batch_idx, (x, h_x, y) in enumerate(dataloader):
-        x.to(cuda_device)
-        h_x.to(cuda_device)
-        y.to(cuda_device)
+        x = x.to(cuda_device)
+        h_x = h_x.to(cuda_device)
+        y = y.to(cuda_device)
 
-        h_x.expand(-1, 3, -1, -1)
+        h_x = h_x.expand(-1, 3, -1, -1)
 
         with torch.no_grad():
             out = model(x, h_x)
 
             probs = torch.sigmoid(out)
-            mask = torch.where(x > 0.5, 1, 0)
+            mask = torch.where(probs > 0.5, 1, 0)
 
         edges = []
-        # TODO: Convert each image in the batch "out" to have 3 channels and store them in the list "edges"
-        out.expand(-1, 3, -1, -1)
-        edges.append(out)
+        mask = mask.expand(-1, 3, -1, -1)
+        for i in range(mask.size(0)):
+            edges.append(mask[i])
 
         assert len(edges) == x.size(0), f'Expected {x.size(0)} elements in edges but got {len(edges)} instead.'
 
         for i in range(len(edges)):
             img_name = str(batch_idx * dataloader.batch_size + i)
-            gt = y[i].expand(-1, 3, -1, -1)
+            gt = y[i].expand(3, -1, -1)
             image = torch.stack([x[i], edges[i], gt])
             save_image(image.float().to('cpu'),
                        destination_path / f'{img_name}.jpg',

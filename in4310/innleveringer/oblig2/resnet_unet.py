@@ -84,10 +84,10 @@ class Decoder(nn.Module):
                 nn.init.constant_(m.bias, 0)
 
     def forward(self, encoder1_blocks, encoder2_blocks):
-        x = torch.cat((encoder1_blocks[0], encoder2_blocks[0]), dim=1)
+        x = torch.cat((encoder1_blocks[4], encoder2_blocks[4]), dim=1)
         x = self.up_conv6(x)
 
-        x = torch.cat((x, encoder1_blocks[1], encoder2_blocks[1]), dim=1)
+        x = torch.cat((x, encoder1_blocks[3], encoder2_blocks[3]), dim=1)
         x = self.conv6(x)
         x = self.up_conv7(x)
 
@@ -95,19 +95,17 @@ class Decoder(nn.Module):
         x = self.conv7(x)
         x = self.up_conv8(x)
 
-        x = torch.cat((x, encoder1_blocks[3], encoder2_blocks[3]), dim=1)
+        x = torch.cat((x, encoder1_blocks[1], encoder2_blocks[1]), dim=1)
         x = self.conv8(x)
         x = self.up_conv9(x)
 
-        x = torch.cat((x, encoder1_blocks[4], encoder2_blocks[4]), dim=1)
+        x = torch.cat((x, encoder1_blocks[0], encoder2_blocks[0]), dim=1)
         x = self.conv9(x)
         x = self.up_conv10(x)
         
         x = self.conv10(x)
-
-        # TODO: Replace the 1st "1" below in torch.Size with your batch size
-        assert output.shape == torch.Size([1, 1, 224, 224]), \
-            f"The output shape should be same as the input image's shape but it is {output.shape} instead."
+        
+        return x
 
 
 class TwoEncodersOneDecoder(nn.Module):
@@ -125,12 +123,12 @@ class TwoEncodersOneDecoder(nn.Module):
         self.decoder = Decoder(out_channels=out_channels)
 
     def forward(self, x, h_x):
-        # TODO: Implement the forward pass calling the encoders and passing the outputs to the decoder
         encoder1_blocks = self.encoder1(x)
         encoder2_blocks = self.encoder2(h_x)
         seg_mask = self.decoder(encoder1_blocks, encoder2_blocks)
 
-# Task 1a)
+        return seg_mask
+
 # Finding number of channels in output blocks of encoder:
 if __name__ == '__main__':
     import os

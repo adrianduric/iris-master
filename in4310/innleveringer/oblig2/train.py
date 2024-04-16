@@ -11,6 +11,9 @@ from datasets import CONSEP
 from resnet_unet import TwoEncodersOneDecoder
 from utils.plotting import plot_loss
 
+import os
+from tqdm import tqdm
+
 cuda_device = torch.device('cuda', 0)
 
 
@@ -48,10 +51,10 @@ def train():
         transforms.ColorJitter(brightness=[0.5, 1.5], contrast=[0.5, 1.5], saturation=[0.5, 1.5], hue=[-0.3, 0.3])
     ])
 
-    dataset = CONSEP('/work/data/nuclei_segmentation/CoNSeP/Train', mode='train', transform=transform)
+    dataset = CONSEP(os.path.join(os.path.dirname(os.path.realpath(__file__)), "data/train"), mode='train', transform=transform)
     dataloader = DataLoader(dataset, batch_size=64, shuffle=True, num_workers=10, pin_memory=True)
 
-    dataset_val = CONSEP('/work/data/nuclei_segmentation/CoNSeP/Val', mode='val')
+    dataset_val = CONSEP(os.path.join(os.path.dirname(os.path.realpath(__file__)), "data/val"), mode='val')
     dataloader_val = DataLoader(dataset_val, batch_size=32, num_workers=10, pin_memory=True)
 
     num_epochs = 30
@@ -65,18 +68,18 @@ def train():
     for epoch in range(0, num_epochs):
         print(f'Epoch: {epoch}')
         epoch_start_time = time.time()
-        for batch_idx, (x, h_x, y) in enumerate(dataloader, 1):
-            x.to(cuda_device)
-            h_x.to(cuda_device)
-            y.to(cuda_device)
+        for batch_idx, (x, h_x, y) in enumerate(tqdm(dataloader), 1):
+            x = x.to(cuda_device)
+            h_x = h_x.to(cuda_device)
+            y = y.to(cuda_device)
 
-            h_x.expand(-1, 3, -1, -1)
+            h_x = h_x.expand(-1, 3, -1, -1)
 
-            preds = model(x, h_x)
+            preds = model(x, h_x).squeeze()
 
             bce_loss = bce_loss_fn(preds, y)
             bce_losses.append(bce_loss.item())
-            dice_loss = dice_loss_fn(preds, y).mean()
+            dice_loss = dice_loss_fn(torch.sigmoid(preds), y).mean()
             dice_losses.append(dice_loss.item())
 
             loss = bce_loss + dice_loss
@@ -88,8 +91,8 @@ def train():
             # The lines below prints loss values every 5 batches.
             # Uncomment them to see the loss go down during training.
 
-            if batch_idx % 5 == 0 or batch_idx == len(dataloader) - 1:
-                print(f'{epoch}-{batch_idx:03}\t{round(bce_loss.item(), 6)} {round(dice_loss.item(), 6)} ', flush=True)
+            # if batch_idx % 5 == 0 or batch_idx == len(dataloader) - 1:
+                # print(f'{epoch}-{batch_idx:03}\t{round(bce_loss.item(), 6)} {round(dice_loss.item(), 6)} ', flush=True)
 
         scheduler.step()
         print(f'Epoch {epoch} took {timedelta(seconds=time.time() - epoch_start_time)}', flush=True)
@@ -121,19 +124,20 @@ def eval_dice_with_h_x(model, dataloader):
     model.eval()
     dice = []
     for batch_idx, (x, h_x, y) in enumerate(dataloader):
-        x.to(cuda_device)
-        h_x.to(cuda_device)
-        y.to(cuda_device)
+        x = x.to(cuda_device)
+        h_x = h_x.to(cuda_device)
+        y = y.to(cuda_device)
 
         with torch.no_grad():
-            h_x.expand(-1, 3, -1, -1)
+            h_x = h_x.expand(-1, 3, -1, -1)
 
-            out = model(x, h_x)
+            out = model(x, h_x).squeeze()
 
             probs = torch.sigmoid(out)
-            mask = torch.where(x > 0.5, 1, 0)
+            mask = torch.where(probs > 0.5, 1, 0)
 
-        dice.append(dice_loss_fn(mask, y).mean().item())
+        dice.append(dice_loss_fn(mask, y))
+
     dice_score = 1 - torch.cat(dice, 0).mean()
     print(f'dice score (the higher the better): {dice_score}')
     model.train()
