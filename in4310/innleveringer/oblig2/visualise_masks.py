@@ -27,23 +27,28 @@ def visualise_segmentation(model_path, destination_path, dataloader):
     destination_path = Path(destination_path)
     destination_path.mkdir(exist_ok=True)
     for batch_idx, (x, h_x, y) in enumerate(dataloader):
-        # TODO: Move (x, h_x, y) to cuda if you're using GPU.
-        # TODO: Convert h_x to have 3 channels just like you did in train.py
+        x.to(cuda_device)
+        h_x.to(cuda_device)
+        y.to(cuda_device)
+
+        h_x.expand(-1, 3, -1, -1)
+
         with torch.no_grad():
-            # TODO: Step 1) Convert h_x to have 3 channels just like you did in the train() function
-            # TODO: Step 2) Run the model and store outputs in the variable out below
-            out = None
-            # TODO: Step 3) Convert the outputs to a binary mask as follows:
-            #               a) Pass the output through the sigmoid function to get an output between 0 and 1
-            #               b) Using 0.5 as the threshold, convert the values to 0 if they are < 0.5 and 1 if > 0.5
+            out = model(x, h_x)
+
+            probs = torch.sigmoid(out)
+            mask = torch.where(x > 0.5, 1, 0)
+
         edges = []
         # TODO: Convert each image in the batch "out" to have 3 channels and store them in the list "edges"
+        out.expand(-1, 3, -1, -1)
+        edges.append(out)
 
         assert len(edges) == x.size(0), f'Expected {x.size(0)} elements in edges but got {len(edges)} instead.'
 
         for i in range(len(edges)):
             img_name = str(batch_idx * dataloader.batch_size + i)
-            gt = None  # TODO: Convert y[i] to have 3 channels and store it in this variable "gt"
+            gt = y[i].expand(-1, 3, -1, -1)
             image = torch.stack([x[i], edges[i], gt])
             save_image(image.float().to('cpu'),
                        destination_path / f'{img_name}.jpg',

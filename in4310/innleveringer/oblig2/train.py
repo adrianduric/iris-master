@@ -66,24 +66,30 @@ def train():
         print(f'Epoch: {epoch}')
         epoch_start_time = time.time()
         for batch_idx, (x, h_x, y) in enumerate(dataloader, 1):
-            # TODO: Step 1) Move x, h_x, and y to GPU
-            # TODO: Step 2) Convert h_x to have 3 channels by repeating the 1 channel it has 3 times.
-            #               Hint: You can use h_x.expand() function to do that without increasing memory usage
-            #                     or use the .repeat() function
-            # TODO: Step 3) Run the model and get the outputs.
-            # TODO: Step 4) a) Call the loss functions bce_loss_fn & dice_loss_fn. Add them to get the loss.
-            #                  The loss should be a single number (not an array).
-            #                   Hint: Use .mean() on dice_loss_fn's output
-            #               b) Append the loss values to their respective lists for plotting.
-            #                  Use .item() while appending the values.
-            # TODO: Step 5) Run the backward() pass on the loss function
-            # TODO: Step 6) Call the optimizer to update the model and then zero out the gradients.
+            x.to(cuda_device)
+            h_x.to(cuda_device)
+            y.to(cuda_device)
+
+            h_x.expand(-1, 3, -1, -1)
+
+            preds = model(x, h_x)
+
+            bce_loss = bce_loss_fn(preds, y)
+            bce_losses.append(bce_loss.item())
+            dice_loss = dice_loss_fn(preds, y).mean()
+            dice_losses.append(dice_loss.item())
+
+            loss = bce_loss + dice_loss
+            loss.backward()
+
+            optimizer.step()
+            optimizer.zero_grad()
 
             # The lines below prints loss values every 5 batches.
             # Uncomment them to see the loss go down during training.
 
-            # if batch_idx % 5 == 0 or batch_idx == len(dataloader) - 1:
-            #     print(f'{epoch}-{batch_idx:03}\t{round(bce_loss.item(), 6)} {round(dice_loss.item(), 6)} ', flush=True)
+            if batch_idx % 5 == 0 or batch_idx == len(dataloader) - 1:
+                print(f'{epoch}-{batch_idx:03}\t{round(bce_loss.item(), 6)} {round(dice_loss.item(), 6)} ', flush=True)
 
         scheduler.step()
         print(f'Epoch {epoch} took {timedelta(seconds=time.time() - epoch_start_time)}', flush=True)
@@ -115,15 +121,19 @@ def eval_dice_with_h_x(model, dataloader):
     model.eval()
     dice = []
     for batch_idx, (x, h_x, y) in enumerate(dataloader):
-        # TODO: Move (x, h_x, y) to cuda
+        x.to(cuda_device)
+        h_x.to(cuda_device)
+        y.to(cuda_device)
+
         with torch.no_grad():
-            # TODO: Step 1) Convert h_x to have 3 channels just like you did in the train() function
-            # TODO: Step 2) Run the model and store outputs in the variable out below
-            out = None
-            # TODO: Step 3) Convert the outputs to a binary mask as follows:
-            #               a) Pass the output through the sigmoid function to get an output between 0 and 1
-            #               b) Using 0.5 as the threshold, convert the values to 0 if they are < 0.5 and 1 if > 0.5
-        dice.append(None)  # TODO: Replace None with the output of the dice_loss_fn called for the binary mask
+            h_x.expand(-1, 3, -1, -1)
+
+            out = model(x, h_x)
+
+            probs = torch.sigmoid(out)
+            mask = torch.where(x > 0.5, 1, 0)
+
+        dice.append(dice_loss_fn(mask, y).mean().item())
     dice_score = 1 - torch.cat(dice, 0).mean()
     print(f'dice score (the higher the better): {dice_score}')
     model.train()
