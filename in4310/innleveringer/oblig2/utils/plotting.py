@@ -21,3 +21,5 @@ def plot_loss(losses, file_name):
     axes.set_ylim([0.1, None])
 
     plt.savefig(f'{file_name}.png')
+
+    plt.close()
