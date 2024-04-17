@@ -3,3 +3,4 @@ results
 TwoEncodersOneDecoder_consep.pth
 bce_loss.npy
 dice_loss.npy
+adriandu.zip
