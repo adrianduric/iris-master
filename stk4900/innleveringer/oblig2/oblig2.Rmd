@@ -1,0 +1,21 @@
+# STK4900 V24 \| Obligatorisk innlevering 2 \| Adrian Duric
+
+## Oppgave 1
+
+### a)
+
+For å finne det forventede antallet menn høyere enn 2 meter, finner vi først sannsynligheten for at en tilfeldig trukket mann er \>200cm høy. Så ganger vi det med antallet samples (1 million) for å få forventet antall.
+
+```{r}
+mu_w = 168
+sigma_w = 6.5
+mu_m = 181
+sigma_m = 8
+
+# Finner sannsynlighet for å trekke en mann over 200cm
+prob = 1 - pnorm(200, mean=mu_m, sd=sigma_m)
+
+# Finner forventet antall menn over 200cm per 1M menn
+prob = prob * 1000000
+cat("Forventet antall menn over 200cm per 1 million menn:", prob)
+```
