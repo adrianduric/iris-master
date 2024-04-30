@@ -95,5 +95,263 @@ chisq.test(table, correct=F)
 
 Vi leser ut $\chi^2 = 11.536$ for $df = 8$, og ser fra en $\chi^2$-fordelingstabell og/eller P-verdien at denne $\chi^2$-verdien er innenfor rimelighetens grenser gitt en antagelse om uavhengighet. Basert på dette holder antagelsen om uavhengighet, og vi vil altså ikke forkaste nullhypotesen.
 
+# Oppgave 2
+
+## a)
+
+```{r}
+eyes = matrix(scan("retinopathy.txt",skip=15),byrow=T,ncol=10)
+
+x1 = eyes[ ,2] # gender (female 0, male 1)
+x2 = eyes[ ,3] # duration since diabetes diagnosis, in years
+x3 = eyes[ ,4] # edema present in one or both eyes
+x4 = eyes[ ,5] # hemoglobin level
+x5 = eyes[ ,6] # body mass index, bmi
+x6 = eyes[ ,7] # pulse, heartbeat over 30 seconds
+x7 = eyes[ ,8] # urine condition (1) or not (0)
+x8 = eyes[ ,9] # diastolic blood pressure
+yy = eyes[ ,10] # main outcome, 1 if retinopathy, 0 if not
+
+aux = cbind(x2,x4,x5,x6,x8)
+cor(aux)
+```
+
+For å få konfidensintervaller for korrelasjonene i tillegg til deres estimater, bruker jeg `cor.test`.
+
+```{r}
+# x2
+cor.test(x2, x4)
+cor.test(x2, x5)
+cor.test(x2, x6)
+cor.test(x2, x8)
+
+# x4
+cor.test(x4, x5)
+cor.test(x4, x6)
+cor.test(x4, x8)
+
+# x5
+cor.test(x5, x6)
+cor.test(x5, x8)
+
+# x6
+cor.test(x6, x8)
+```
+
+Vi leser ut at de signifikante ikke-null korrelasjonene (hvor konfidensintervallet ikke inneholder 0) er: $x_2$ og $x_5$, $x_4$ og $x_5$, $x_4$ og $x_6$, $x_4$ og $x_8$, $x_5$ og $x_8$, og $x_6$ og $x_8$. Konfidensintervallet for korrelasjonen mellom puls ($x_6$) og diastolisk blodtrykk ($x_8$) er: $(0.2214927, 0.3580707)$, som vil si at korrelasjonen er positiv og signifikant. Det vil si at det er et positivt lineært forhold mellom målt puls og blodtrykk.
+
+## b)
+
+Utfører logistisk regresjon for hver av kovariatene:
+
+```{r}
+summary(glm(yy~x1, family=binomial))
+summary(glm(yy~x2, family=binomial))
+summary(glm(yy~x3, family=binomial))
+summary(glm(yy~x4, family=binomial))
+summary(glm(yy~x5, family=binomial))
+summary(glm(yy~x6, family=binomial))
+summary(glm(yy~x7, family=binomial))
+summary(glm(yy~x8, family=binomial))
+```
+
+Fra utskriften leser vi at $x_2$, $x_3$, $x_5$, $x_6$ $x_7$ og $x_8$ har tilhørende signifikante $\hat\beta$-estimater. I dette tilfellet er alle disse $\hat\beta$-verdiene også positive, som vil si at alle når en av disse kovariatene øker med 1, øker log-odds ratioen for at $y$ inntreffer med den tilhørende $\hat\beta$-verdien.
+
+## c)
+
+```{r}
+augen = glm(yy ~ x1+x2+x3+x4+x5+x6+x7+x8, family=binomial)
+summary(augen)
+```
+
+Formelen bak denne regresjonsmodellen er:
+
+$$P(y=1 | x_1, \dots, x_8) = \frac{exp(\beta_0 + \beta_1 x_1 + \dots + \beta_8 x_8)}{1 + exp(\beta_0 + \beta_1 x_1 + \dots + \beta_8 x_8)}$$
+
+Dette kan også uttrykkes som:
+
+$$log(\frac{P(y=1 | x_1, \dots, x_8)}{1 - P(y=1 | x_1, \dots, x_8)}) = \beta_0 + \beta_1 x_1 + \dots + \beta_8 x_8$$
+
+hvor $y$ er et binært utfall (her: har retinopati inntruffet eller ikke), $x$-verdiene er kovariater, og $\beta$-verdiene er regresjonskoeffisienter tilknyttet hver sin kovariat.
+
+Fra å lese utskriften ser vi at utenom skjæringspunktet er $\hat\beta_2$, $\hat\beta_3$ og $\hat\beta_7$ signifikante på 95% konfidensnivå eller høyere, mens $\hat\beta_8$ er nesten også det (P-verdien er så vidt høyere enn 0,05). De er alle sammen positive, som vil si at om en av de tilhørende kovariatene øker med 1 mens alle andre kovariatverdier holdes fast, er log-odds ratioen estimert å øke med den tilsvarende $\hat\beta$-verdien, slik vi kan lese fra den andre formelen over.
+
+Størrelsen på $\hat\beta$-verdiene må tolkes ut fra hva som er vanlige størrelser for de tilhørende kovariatene. Blant de signifikante $\hat\beta$-verdiene ser vi f.eks. at $\hat\beta_3$ og $\hat\beta_7$ er betydelig større enn $\hat\beta_2$ og $\hat\beta_8$, men de to førstnevnte tilhører også binære kovariater, dvs. $x_3$ og $x_7$ kan aldri ta verdier større enn 1.
+
+```{r}
+sprintf("Forventet bidrag fra kovariant x2: %.2f", mean(x2)*augen$coefficients[3])
+sprintf("Forventet bidrag fra kovariant x8: %.2f", mean(x8)*augen$coefficients[9])
+```
+
+Fra å regne $\hat\beta_2\bar x_2$ og $\hat\beta_8\bar x_8$ får vi en idé av hvor stor økning i log-odds ratioen vi kan forvente å få fra en gjennomsnittlig kovariatverdi for $x_2$ og $x_8$ mtp. vanlige størrelsesforhold for kovariatene. Vi ser da at alle de signifikante regresjonskoeffisientene har sammenlignbart store bidrag til økning i log-odds ratioen. Spesielt $x_3$, tilstedeværelsen av ødem i ett eller begge øynene, ser ut til å øke log-odds ratioen mest, og har dessuten veldig høy signifikans.
+
+Totalt sett anser de fire kovariatene $x_2$, $x_3$, $x_7$ og $x_8$ for å være de viktigste, da alle er innenfor et ca. 95% konfidensnivå og gir sammenlignbart store økninger i log-odds ratio. Det å utføre den fullstendige regresjonen gir fordelen av at modellen blir mer presis spesielt mtp. å identifisere konfunderende variabler og det sanne bidraget til kovariatene. I dette eksempelet så vi f.eks. i a) at $x_2$ og $x_5$ har signifikant korrelasjon, og at begges koeffisienter var signifikante i logistisk regresjon med kun én kovariat. Men i den fulle regresjonen var kun $\hat\beta_2$ signifikant, som tyder på at $x_2$ i større grad er en kausal variabel for $y$, mens $x_5$ hadde en konfunderende effekt.
+
+## d)
+
+```{r}
+one = 1 + 0*(1:length(yy))
+X = cbind(one,x1,x2,x3,x4,x5,x6,x7,x8)
+betahat = augen$coef
+phats = exp(X %*% betahat)/(1 + exp(X %*% betahat))
+plot(1:c(length(yy)), phats, xlab="patient #", ylab="est. probability of retinopathy")
+```
+
+Grafen viser estimert sannsynlighet for retinopati for hver pasient i datasettet basert på modellen vår i c). Vi kan ikke tolke typiske kjennetegn på pasienter med høy risiko fra grafen selv, men heller fra å se på regresjonsanalysen slik vi gjorde i c). Da så vi at noen signifikante risikofaktorer som kunne øke risikoen for retinopati er:
+
+- Antall år pasienten har vært diagnotisert med diabetes (flere år øker risikoen)
+- Om pasienten har ødem i ett eller begge øynene (hvis ja, øker risikoen)
+- Om pasienten har en urinrelatert sykdom (hvis ja, øker risikoen)
+- Pasientens diastoliske blodtrykk (høyere blodtrykk øker risikoen)
+
+En pasient med høy risiko for retinopati vil altså typisk være en med høye verdier for en eller flere av disse faktorene, f.eks. en som har hatt diabetes lenge, har ødem i minst ett øye, har en urinrelatert sykdom og/eller har høyt diastolisk blodtrykk. En med lav risiko vil derimot ha lave verdier for disse faktorene. Andre mulige risikofaktorer i analysen har vist seg å ikke være signifikante, så vi kan ikke si med sikkerhet om de påvirker risikoen for retinopati eller ikke.
+
+## e)
+
+Gitt $\sigma_{i,j}$ som kovariansen mellom $U_i$ og $U_j$ ($Var(U_i) = \sigma_{i,i} = \sigma_i^2$) har vi:
+$$
+\begin{split}
+cov(a_iU_i, a_jU_j) &= E[(a_iU_i - a_i\mu_i) (a_jU_j - a_j\mu_j)] \\
+&= E[a_ia_j(U_i - \mu_i)(U_j - \mu_j)] \\
+&= a_ia_j\ E[(U_i - \mu_i)(U_j - \mu_j)] \\
+&= a_ia_j\ cov(U_i, U_j) \\
+&= a_ia_j\sigma_{i,j}
+\end{split}
+$$
+Sammen med hvordan varians for lineære kombinasjoner av tilfeldige variabler er definert, har vi:
+$$
+\begin{split}
+Var(a_iU_i + a_jU_j) &= a_i^2\ Var(U_i) + a_j^2\ Var(U_j) + 2a_ia_j\ cov(U_i, U_j) \\
+&= cov(a_iU_i, a_iU_i) + cov(a_jU_j, a_jU_j) + 2\ cov(a_iU_i, a_jU_j)
+\end{split}
+$$
+Dette kan utvides til flere enn to stokastiske variabler. Generelt kan vi beskrive dette som at variansen i vår lineære kombinasjon er lik summen av kovariansene av alle mulige par av stokastiske variabler i den lineære kombinasjonen (inkludert variansen til den enkelte stokastiske variabelen, som vil si å pare den med seg selv).
+
+For vår lineære kombinasjon $a^{tr}U$ følger det da at vi har:
+
+$$
+\begin{split}
+Var(a^{tr}U) &= Var(a_0U_0 + \dots + a_8U_8) \\
+&= \sum_{i=0}^8\sum_{j=0}^8 cov(a_iU_i, a_jU_j) \\
+&= \sum_{i=0}^8\sum_{j=0}^8 a_ia_j\sigma_{i,j}
+\end{split}
+$$
+
+Dette viser alt unntatt det siste leddet, nemlig at vi kan uttrykke den kvadratiske formen som en matrisemultiplikasjon. Jeg er ikke sikker på hva som er den mest elegante måten å demonstrere dette, men forsøker å utlede det direkte i det følgende:
 
 
+$$
+\begin{split}
+a^{tr}\Sigma &= 
+\begin{bmatrix}
+a_0 & a_1 & \dots & a_8
+\end{bmatrix}
+\begin{bmatrix}
+\sigma_0^2 & \sigma_{0,1} & \dots & \sigma_{0,8} \\
+\sigma_{1,0} & \sigma_1^2 && \vdots \\
+\vdots && \ddots \\
+\sigma_{8,0} & \dots && \sigma_8^2
+\end{bmatrix} \\
+\\
+&= \begin{bmatrix}
+a^{tr}\boldsymbol\sigma_{0} & \dots & a^{tr}\boldsymbol\sigma_{8}
+\end{bmatrix} \quad hvor \quad \boldsymbol\sigma_j =
+\begin{bmatrix}
+\sigma_{0,j} \\
+\vdots \\
+\sigma_{8,j}
+\end{bmatrix}, \quad
+a^{tr}\boldsymbol\sigma_{j} = \sum_{i=0}^{8} a_i\sigma_{i,j} \\
+\\
+a^{tr}\Sigma a &=
+\begin{bmatrix}
+a^{tr}\boldsymbol\sigma_{0} & \dots & a^{tr}\boldsymbol\sigma_{8}
+\end{bmatrix}
+\begin{bmatrix}
+a_0 \\
+\vdots \\
+a_8
+\end{bmatrix} \\
+&= a_0a^{tr}\boldsymbol\sigma_{0} + \dots + a_8a^{tr}\boldsymbol\sigma_{8} \\
+&= a_0 \sum_{i=0}^{8} a_i\sigma_{i,0} + \dots + a_8 \sum_{i=0}^{8} a_i\sigma_{i,8} = \sum_{i=0}^8 \sum_{j=0}^8  a_ia_j\sigma_{i,j} \quad q.e.d.
+\end{split}
+$$
+
+## f)
+
+Finner den lineære prediksjonen (log-odds ratioen) $\hat\gamma_{jones}$ og sender den gjennom den logistiske funksjonen for å regne ut estimert $\hat p_{jones}$.
+
+```{r}
+# Estimert lineær prediktor (log-odds ratio)
+pred = predict(augen, newdata=data.frame(x1=0, x2=10, x3=1, x4=10.6, x5=23.0, x6=41, x7=0, x8=77), type="link")
+sprintf("Estimert lineær prediktor: %.4f", pred)
+
+# Estimert sannsynlighet
+prob = predict(augen, newdata=data.frame(x1=0, x2=10, x3=1, x4=10.6, x5=23.0, x6=41, x7=0, x8=77), type="response")
+sprintf("Estimert sannsynlighet: %.2f%%", prob*100)
+```
+
+Ved å sette `a` lik Mrs. Jones' data kan vi bruke resultatet fra e) til å regne variansen til estimatet.
+
+```{r}
+a = c(x0=1, x1=0, x2=10, x3=1, x4=10.6, x5=23.0, x6=41, x7=0, x8=77)
+Sigma = vcov(augen)
+tausq = t(a) %*% Sigma %*% a
+sprintf("Varians: %.4f", tausq)
+tau = sqrt(tausq)
+sprintf("Standardavvik: %.4f", tau)
+```
+
+Beregner 90% konfidensintervallet for den sanne lineære prediktoren, og transformerer til 90% konfidensintervallet for den sanne sannsynligheten.
+
+```{r}
+lb_pred = pred - qnorm(0.95) * tau
+lb_prob = exp(lb_pred) / (1 + exp(lb_pred))
+ub_pred = pred + qnorm(0.95) * tau
+ub_prob = exp(ub_pred) / (1 + exp(ub_pred))
+
+sprintf("90%% konfidensintervall for lineær prediktor: (%f, %f)", lb_pred, ub_pred)
+sprintf("90%% konfidensintervall for sannsynlighet: (%f, %f)", lb_prob, ub_prob)
+```
+
+## g)
+
+```{r}
+indexM = (1:n)[x1 == 1] # 348 men
+indexW = (1:n)[x1 == 0] # 343 women
+eyesM = eyes[indexM, ] # dataset for the men
+eyesW = eyes[indexW, ] # dataset for the women
+
+x2M = eyesM[ ,3] # duration since diabetes diagnosis, in years
+x3M = eyesM[ ,4] # edema present in one or both eyes
+x4M = eyesM[ ,5] # hemoglobin level
+x5M = eyesM[ ,6] # body mass index, bmi
+x6M = eyesM[ ,7] # pulse, heartbeat over 30 seconds
+x7M = eyesM[ ,8] # urine condition (1) or not (0)
+x8M = eyesM[ ,9] # diastolic blood pressure
+yyM = eyesM[ ,10] # main outcome, 1 if retinopathy, 0 if not
+
+x2W = eyesW[ ,3] # duration since diabetes diagnosis, in years
+x3W = eyesW[ ,4] # edema present in one or both eyes
+x4W = eyesW[ ,5] # hemoglobin level
+x5W = eyesW[ ,6] # body mass index, bmi
+x6W = eyesW[ ,7] # pulse, heartbeat over 30 seconds
+x7W = eyesW[ ,8] # urine condition (1) or not (0)
+x8W = eyesW[ ,9] # diastolic blood pressure
+yyW = eyesW[ ,10] # main outcome, 1 if retinopathy, 0 if not
+
+augenM = glm(yyM ~ x2M+x3M+x4M+x5M+x6M+x7M+x8M, family=binomial)
+augenW = glm(yyW ~ x2W+x3W+x4W+x5W+x6W+x7W+x8W, family=binomial)
+summary(augenM)
+summary(augenW)
+```
+
+Alle regresjonskoeffisientene sammenlignes med utgangspunkt i hvordan de var i den kombinerte regresjonen for menn og kvinner.
+
+- $\hat\beta_2$: Omtrent lik som før.
+- $\hat\beta_3$: Høyere verdi og fortsatt veldig signifikant for kvinner. Lavere verdi og signifikant på lavere konfidensnivå for menn.
+- $\hat\beta_4$: Høyere verdi og signifikant på 90% konfidensnivå for menn. Lavere (negativ) verdi og fortsatt insignifikant for kvinner.
+- $\hat\beta_5$: Fortsatt insignifikant for begge kjønn. Negativ verdi for kvinner.
+- $\hat\beta_6$: Høyere verdi og signifikant på 90% konfidensnivå for kvinner. Lavere verdi og fortsatt insignifikant for menn.
+- $\hat\beta_7$: Høyere verdi og fortsatt signifikant for menn. Lavere verdi og insignifikant for kvinner.
+- $\hat\beta_8$: Så vidt høyere verdi for kvinner, lavere verdi for menn. Insignifikant for begge kjønn.
