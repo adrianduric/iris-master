@@ -36,6 +36,9 @@ b1 = sum(table[, 1]) / n # b_thin
 b2 = sum(table[, 2]) / n # b_normal
 b3 = sum(table[, 3]) / n # b_overweight
 
+sprintf("a1: %f, a2: %f, a3: %f, a4: %f, a5: %f", a1, a2, a3, a4, a5)
+sprintf("b1: %f, b2: %f, b3: %f", b1, b2, b3)
+
 # Beregner 95% konfidensintervall for p_4,2
 N42 = table[4,2]
 p42 = N42 / n
@@ -317,8 +320,8 @@ sprintf("90%% konfidensintervall for sannsynlighet: (%f, %f)", lb_prob, ub_prob)
 ## g)
 
 ```{r}
-indexM = (1:n)[x1 == 1] # 348 men
-indexW = (1:n)[x1 == 0] # 343 women
+indexM = (1:length(yy))[x1 == 1] # 348 men
+indexW = (1:length(yy))[x1 == 0] # 343 women
 eyesM = eyes[indexM, ] # dataset for the men
 eyesW = eyes[indexW, ] # dataset for the women
 
@@ -349,9 +352,9 @@ summary(augenW)
 Alle regresjonskoeffisientene sammenlignes med utgangspunkt i hvordan de var i den kombinerte regresjonen for menn og kvinner.
 
 - $\hat\beta_2$: Omtrent lik som før.
-- $\hat\beta_3$: Høyere verdi og fortsatt veldig signifikant for kvinner. Lavere verdi og signifikant på lavere konfidensnivå for menn.
-- $\hat\beta_4$: Høyere verdi og signifikant på 90% konfidensnivå for menn. Lavere (negativ) verdi og fortsatt insignifikant for kvinner.
-- $\hat\beta_5$: Fortsatt insignifikant for begge kjønn. Negativ verdi for kvinner.
-- $\hat\beta_6$: Høyere verdi og signifikant på 90% konfidensnivå for kvinner. Lavere verdi og fortsatt insignifikant for menn.
-- $\hat\beta_7$: Høyere verdi og fortsatt signifikant for menn. Lavere verdi og insignifikant for kvinner.
-- $\hat\beta_8$: Så vidt høyere verdi for kvinner, lavere verdi for menn. Insignifikant for begge kjønn.
+- $\hat\beta_3$: Høyere verdi og fortsatt veldig signifikant for kvinner. Lavere verdi og signifikant på lavere konfidensnivå (99%) for menn.
+- $\hat\beta_4$: Høyere verdi og signifikant på 95% konfidensnivå for menn. Lavere (negativ) verdi og fortsatt insignifikant for kvinner.
+- $\hat\beta_5$: Omtrent lik som før.
+- $\hat\beta_6$: Høyere verdi og signifikant på 95% konfidensnivå for kvinner. Lavere (negativ) verdi og fortsatt insignifikant for menn.
+- $\hat\beta_7$: Litt høyere verdi for menn, ca. samme som før for kvinner. Signifikant for begge kjønn, men på lavere konfidensnivå (95%).
+- $\hat\beta_8$: Litt høyere verdi for menn, ca. samme som før for kvinner. Fortsatt signifikant for menn på 90% konfidensnivå, og insignifikant for kvinner.
