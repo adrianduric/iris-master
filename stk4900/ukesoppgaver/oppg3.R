@@ -1,4 +1,4 @@
-data = scan("data/exer2.dat")
+data = scan("http://www.uio.no/studier/emner/matnat/math/STK4900/v17/exer2.dat")
 
 # Plotting data
 par(mfrow=c(1, 3))
