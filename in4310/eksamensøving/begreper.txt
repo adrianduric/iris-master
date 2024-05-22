@@ -1,0 +1,11 @@
+Empirical Risk Minimization (ERM): Prinsippet å minimere risiko for feilklassifisering. Matematisk tilsvarer dette å minimere en loss-funksjon som tar inn y_hatt og y, og måler hvor langt y_hatt er unna y.
+
+Loss-funksjoner:
+    Logistic loss: Basert på den logistiske funksjonen.
+    Quadratic loss: Samme som i lineær regresjon.
+    0-1 loss: 0 hvis y_hatt = y, 1 ellers.
+    Hinge loss: ligner på 0-1 men med skalering avhengig av forskjellen på y og y_hatt.
+
+Oppdateringsregel: w_t+1 = w_t - eta * gradient av loss mhp. w_t
+
+
