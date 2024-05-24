@@ -1,11 +1,261 @@
-Empirical Risk Minimization (ERM): Prinsippet å minimere risiko for feilklassifisering. Matematisk tilsvarer dette å minimere en loss-funksjon som tar inn y_hatt og y, og måler hvor langt y_hatt er unna y.
+Empirical Risk Minimization (ERM)
+Prinsippet å minimere risiko for feilklassifisering. Matematisk tilsvarer dette å minimere en loss-funksjon som tar inn y_hatt og y, og måler hvor langt y_hatt er unna y.
 
-Loss-funksjoner:
+Loss-funksjoner
     Logistic loss: Basert på den logistiske funksjonen.
     Quadratic loss: Samme som i lineær regresjon.
     0-1 loss: 0 hvis y_hatt = y, 1 ellers.
     Hinge loss: ligner på 0-1 men med skalering avhengig av forskjellen på y og y_hatt.
 
-Oppdateringsregel: w_t+1 = w_t - eta * gradient av loss mhp. w_t
+Oppdateringsregel
+w_t+1 = w_t - eta * gradient av loss mhp. w_t
+
+Typer padding
+    Zero padding: pad med 0-ere
+    Replicate padding: pad med verdien av nærmeste piksel
+    Mirror padding / reflect padding: speile bildet og padde med verdier fra det speilede bildet
+
+Output størrelse av konvolusjon for MxN input og kxk filter
+    Valid/reduced (bare konv. over der filteret passer, ingen padding): (M - k + 1) x (N - k + 1)
+    Same (padding der sentrum av filteret er inni input): M x N (samme)
+    Full (padding i alle posisjoner der filteret har noe overlapp med input): (M + k - 1) x (N + k - 1)
+
+Parameter sharing
+Parametrene i kernel brukes på tvers av alle input, parametrene deles.
+
+Indreprodukt
+u^T v = u1v1 + ... + uNvN
+Indreproduktet er en måling av likhet mellom vektorer. Konvolusjon er indreprodukt av et vindu av inputen og filteret.
+Ikke-null outputs der input ligner filteret (parallelle), 0 der de er forskjellige (ortogonale).
+
+Translation Invariance
+Deteksjon er lokalisert i konvolusjon; gjøres per piksel. Globalt for Fully Connected NNs; alle nevroner i en layer er koblet til alle i neste layer.
+Fordi deteksjon er lokalisert, er konvolusjon invariant til affine transformasjoner (translasjon, rotasjon etc.)
+
+Stacking Layers
+Bedre å ha mange små enn få store filtere; færre parametre, ekvivalent regneoperasjon.
+
+Regne ut Output Spatial Size
+N[l+1] = lower_bound( (N[l] + 2p - k)/s + 1 )
+Output size N[l+1] x N[l+1]
+Input size N[l] x N[l]
+Padding p
+Filter size k x k
+Stride s
+
+Receptive field
+Hvor mange input-piksler er input for et nevron. Generelt bra med stor receptive field; mer effektiv bruk av færre parametre. Kommer gjerne av mange små filtere i dybden (mange hidden layers), heller enn få store i bredden.
+
+Beregne receptive field
+Layer index l = 1, ..., L
+Filter size k[l] x k[l]
+Stride s[l] x s[l]
+
+Rekursjon for receptive field R[l] med R[0] = 1
+R[l] = R[l-1] + (k[l] - 1) * prod__i=1^^l-1 s[i]
+
+Nøste opp rekursjon
+R[l] = sum__j=1^^l (k[j] - 1) * prod__i=1^^j-1 s[i]
+
+Dropout
+Under trening, tilfeldig sette noen nevroner lik 0 i en iterasjon.
+Støyet fra Dropout reduserer korrelasjon mellom nevroner.
+Systemet blir mer robust, siden det ikke kan avhenge like mye av noen få korrelasjoner; ingen nevroner dominerer outputen.
+Under inferens brukes hele nettverket igjen.
+
+Assymetrisk konvolusjon
+3x1-konvolusjon etterfulgt av 1x3 konvolusjon gir samme receptive field som en 3x3-konvolusjon.
+Billigere regnemessig pga. færre parametre.
+Reduksjonen av filterstørrelse gir likevel mindre uttrykkskraft til nettverket.
+
+Residual connections
+Snarveier mellom layers; etter en blokk med f.eks. konvolusjoner, send inputen til den blokken til enden av blokken og konkatener med blokkens output.
+Bidrar til å fjerne problemer med vanishing gradient.
+Gjør at unyttige konvolusjonsblokker kan hoppes over.
+Aldri verre enn identitet (dvs. aldri verre enn om man bare ikke hadde hatt konvolusjonsblokken).
+Kan brukes til at nettverket husker inputen bedre.
+
+Batch Normalization (BN)
+Normaliserer per input-element / feature x_i over alle feature-vektorer i et batch.
+Gir standardnormalfordelte x_hatt_i over minibatchet som normaliseres.
+Deretter Scale and Shift: x_hatt_i-ene går gjennom en enkel affin-transform gamma*x_hatt_i + beta hvor gamma blir nytt standardavvik og beta blir ny mean. Dette gjør at gamma og beta kan trenes.
+
+BN for konvolusjon
+Normaliseringen skjer over alle elementer per kanal i et gitt feature map, ikke per element / feature i feature map-et.
+Reduserer antall parametre.
+
+BN ved inferens
+Ved trening lagrer man løpende mean og sd over hele datasettet.
+Ved inferens normaliseres x_i-ene med de lagrede mean og sd fra hele datasettet, før man igjen bruker skaleringstransformasjonen med de lærte verdiene beta og gamma.
+
+Fordeler med Batch Normalization
+Gjør at endringene i parametre ikke skaleres på bagrunn av størrelsen på inputen; gjør nettverket mer robust mot input av forskjellige størrelser.
+Stabiliserer vekst av parametre; store vekter (parameterverdier) gir små gradienter.
+
+Group Normalization
+I stedet for å normalisere per kanal over et batch, grupperer man flere kanaler sammen innenfor ett feature map og normaliserer over disse kanalene.
+Effektivt når man har små batch sizes, og man ellers ville risikert ustabile normaliserte verdier pga. de små batchene.
+
+Layer Normalization
+Tilsvarer BN, men gjøres over alle hidden units i ett og samme layer. Uavhengig av størrelsen på mini-batchet man trener med.
+Nyttig når man ikke ønsker normalisering avhengig av batch size, f.eks. RNNs.
+
+Densenet
+Innenfor en konvolusjonsblokk med en gitt feature map size, blir hver layer av feature maps konkatenert med forrige layer sin feature map.
+
+Saddelpunkt
+Unngås med Momentum-metoder (ha "fart" nok til å hoppe over punktet)
+
+Stokastisk Gradient Descent (SGD)
+I stedet for å finne gradient over hele treningsbatchen (Batch Gradient Descent / BGD), velg ett sample tilfeldig og beregn GD på det.
+Er mye billigere regnemessig, og forventet verdi av gradienten = gradienten til hele batchet.
+Gir høy varians i gradienten man får.
+
+Mini-Batch GD
+Midt imellom SGD og BGD. Velger et gitt antall samples (tilsvarer mini-batch size) og beregner gradient på det. Billigere enn BGD, og gir mindre varians enn SGD.
+
+Flat region
+Kontinuerlig intervall (ikke bare et punkt) der den deriverte er 0.
+Vanskelig å håndtere; kan gjøres med å vurdere stoppekriterier, om loss er lavt nok, gjøre mange iterasjoner.
+
+SGD med Momentum
+Vanlig SGD:
+    g_t = gradient av l_j mhp. w_t der j er samplet fra 1, ..., N og N er antall samples i hele treningssettet
+    w_t+1 = w_t - eta * g_t
+Med momentum har vi:
+    v_1 = g_1
+    Velocity term: v_t = -eta * g_t + mu * v_t-1
+    mu: Momentum-parameter, typisk mu=0.5, 0.9, 0.99
+
+Oppdateringsregel med Momentum:
+    w_t+1 = w_t + v_t
+Momentum husker altså gamle gradienter, og lar dem bidra i oppdateringen av w_t+1.
+"Farten" gjør det mer sannsynlig å hoppe forbi lokale minima, saddelpunkter etc., men for mye momentum gjør det mulig med overshooting.
+
+Adagrad
+Husker Sum of Squares ved hvert koordinat, som brukes til å skalere gradienten ved hvert koordinat. I koordinater med veldig bratt gradient (derav høy SS) vil endringen bli mindre, mens områder med veldig slak gradient (lav SS) får høyere endring slik at læringen blir raskere.
+Fordel: endringen i parameterverdier går raskere der det ellers ville gått tregt, og saktere der det ellers kunne gått for fort.
+SS kan bli veldig stor veldig raskt, så det kan være ønskelig å nedskalere SS etter noen iterasjoner.
+
+RMSProp
+Minner om Adagrad, men hvor gamle SS-verdier blir nedskalert iht. en beta-hyperparameter. Med beta vektlegger man hvor mye man vekter nåværende størrelse av gradienten vs. gamle størrelser av gradienten ved de ulike koordinatene.
+
+ADAM
+RMSProp + Momentum. Fra RMSProp har man nøyaktig den samme skaleringen på oppdateringen av parameterverdier iht. gamle og nåværende gradientstørrelser per koordinat. Dette bakes inn i velocity-termen i Momentum, som ellers ser lik ut som før.
+Denne metoden får altså både fordelen fra momentum av å hoppe over lokale minima, saddelpunkter osv., og å vekte hvor mye parametrene endres ut fra hvor endringen er brattest eller slakest.
+
+Kryssvalidering
+Del opp test- og valideringsdataen i n like store deler. Velg en av dem som valideringssett og resten som treningssett. Deretter trener man en modell på treningssettet og evaluerer med valideringssettet som vanlig. Dette gjøres n ganger, en gang for hver del, og produserer n forskjellige modeller.
+Basert på målinger på valideringssettet kan man evaluere performance, modellvalg etc.
+Man kan også bruke de n modellene som blir laget til en ensemblemodell.
+
+Bootstrapping
+Sample med tilbakelegging fra training + validation-settene og dele opp det samplede settet i training subset og validation subset. Man trener og validerer på disse. Prosessen gjøres mange ganger.
+Generelt foretrukket over kun ett fastsatt validation set. Kan overfitte til hele non-test-settet samlet om det gjøres mye.
+
+Representabilitet
+Hvorvidt vårt development set (train + val + test) passer til dataene vi skal bruke modellen på. "Ekte" data kan være helt forskjellig fra dev-settet.
+
+Domain Shift
+Forekommer når domenet vårt dev-sett er fra, er et annet enn domenet til de "ekte" dataene vi skal bruke modellen på i virkeligheten.
+
+External Test Set
+Datasett for testing som gjerne er hentet fra en forskjellig kilde enn dev-settet, men som passer til den ønskede applikasjonen av modellen.
+F.eks. data fra et annet sted, data fra et annet tidspunkt, etc.
+
+Hvordan oppnå generalisering
+    Kontrollere nettverkets kapasitet
+        Redusere antallet parametre å trene
+            Flere små conv-layers heller enn mange store
+            Separerbare konvolusjoner i dybden
+            Redusere bredde (dvs. antall kanaler) og dybde (antallet layers)
+            Skalere input-størrelse på bilder
+        Dropout
+        Regularization / Weight decay (f.eks. L2-regularisering)
+    Fasilitere læring
+        Residual connections
+        Batch normalization
+        Transfer learning (f.eks. finetuning på allerede trente modeller)
+        Learning rate schedule (f.eks. gjøre eta mindre med tid)
+        Optimisation method (f.eks. Ada, RMSProp, ADAM)
+    Bildespesifikk normalisering
+        Generelt normalisering, men måter som ikke gir mening for andre datasett enn bilder
+        F.eks. Group Normalization
+    Data Augmentation
+        F.eks. tilfeldige affine transformasjoner av hvert bilde under trening.
+    Mer mangfoldig treningsdata
+
+Accuracy
+(TP + TN) / n
+
+Precision
+TP / (TP + FP)
+Hvor stor andel av positive klassifiseringer er faktisk positive?
+
+Recall
+TP / (TP + FN)
+Hvor stor andel av faktisk positive data ble klassifisert som positive?
+
+Average Precision (AP)
+Arealet under Precision-Recall curve
+Måler hvor god modellen var til å predikere riktig klasse for en gitt klasse
+
+Mean Average Precision (mAP)
+Gjennomsnittlig AP per klasse
+
+Sensitivity / True Positive Rate (TPR)
+TP / (TP + FN)
+= Recall
+
+Specificity / True Negative Rate (TNR)
+TN / (TN + FP)
+Hvor stor andel av faktisk negative data ble klassifisert som negative?= 1 - Specificity
+
+ROC curve
+Tilsvarer Precision-Recall curve men for 1-Specificity og Sensitivity
+
+AUC eller AUROC
+Areal under ROC-kurven
+
+Balanced Accuracy
+(TPR + TNR) / 2
+Nyttig når det er forskjellig antall av forekomster per klasse
+
+Usikkerhet ved performance-estimater
+Estimatene er ikke eksakte - usikkerhet bør måles.
+Konfidensintervallet bør beregnes, f.eks. med Bootstrap KI.
+
+Generalisering (egenskap hos en modell)
+Modellen gir omtrent like prediksjoner for trening- og testdata, når trening- og testdata kommer fra lignende distribusjoner
+
+Domenetilpasning (egenskap hos en modell)
+Modellen gir omtrent like prediksjoner for trening- og testdata, når trening- og testdata kommer fra forskjellige distribusjoner
+
+Out-of-distribution (egenskap hos data)
+Et sample er svært forskjellig fra dataene modellen vår var trent på
+
+Outliers (egenskap hos data)
+Et sample har svært uvanlige verdier ift. distribusjonene til trening- eller testdataene, men kan likevel være fra de distribusjonene.
+
+Distribution shift (egenskap hos data)
+Samples som har forskjellige statistiske egenskaper fra dataene vi trente modellen på (de stammer fra en annen distribusjon).
+
+Geometric image transformations
+Endrer geometriske egenskaper; størrelse, form, posisjon, orientering etc.
+Crop er geometrisk.
+
+Photometric transformations
+Endrer lysegenskaper i bilder; f.eks. lysstyrke, kontrast, farge, støy etc.
+
+Other transformations
+Kan tolkes som en av de to ovennevnte, eller begge
+F.eks. blur, kantfiltre (Sobel, Canny) etc.
+
+
+
+
+
+
+
 
 
