@@ -1,5 +1,8 @@
+LINEAR MODELS og NEURAL NETWORKS
+
+
 Empirical Risk Minimization (ERM)
-Prinsippet å minimere risiko for feilklassifisering. Matematisk tilsvarer dette å minimere en loss-funksjon som tar inn y_hatt og y, og måler hvor langt y_hatt er unna y.
+    Prinsippet å minimere risiko for feilklassifisering. Matematisk tilsvarer dette å minimere en loss-funksjon som tar inn y_hatt og y, og måler hvor langt y_hatt er unna y.
 
 Loss-funksjoner
     Logistic loss: Basert på den logistiske funksjonen.
@@ -8,7 +11,11 @@ Loss-funksjoner
     Hinge loss: ligner på 0-1 men med skalering avhengig av forskjellen på y og y_hatt.
 
 Oppdateringsregel
-w_t+1 = w_t - eta * gradient av loss mhp. w_t
+    w_t+1 = w_t - eta * gradient av loss mhp. w_t
+
+
+CONVOLUTIONAL NEURAL NETWORKS
+
 
 Typer padding
     Zero padding: pad med 0-ere
@@ -21,147 +28,159 @@ Output størrelse av konvolusjon for MxN input og kxk filter
     Full (padding i alle posisjoner der filteret har noe overlapp med input): (M + k - 1) x (N + k - 1)
 
 Parameter sharing
-Parametrene i kernel brukes på tvers av alle input, parametrene deles.
+    Parametrene i kernel brukes på tvers av alle input, parametrene deles.
 
 Indreprodukt
-u^T v = u1v1 + ... + uNvN
-Indreproduktet er en måling av likhet mellom vektorer. Konvolusjon er indreprodukt av et vindu av inputen og filteret.
-Ikke-null outputs der input ligner filteret (parallelle), 0 der de er forskjellige (ortogonale).
+    u^T v = u1v1 + ... + uNvN
+    Indreproduktet er en måling av likhet mellom vektorer. Konvolusjon er indreprodukt av et vindu av inputen og filteret.
+    Ikke-null outputs der input ligner filteret (parallelle), 0 der de er forskjellige (ortogonale).
 
 Translation Invariance
-Deteksjon er lokalisert i konvolusjon; gjøres per piksel. Globalt for Fully Connected NNs; alle nevroner i en layer er koblet til alle i neste layer.
-Fordi deteksjon er lokalisert, er konvolusjon invariant til affine transformasjoner (translasjon, rotasjon etc.)
+    Deteksjon er lokalisert i konvolusjon; gjøres per piksel. Globalt for Fully Connected NNs; alle nevroner i en layer er koblet til alle i neste layer.
+    Fordi deteksjon er lokalisert, er konvolusjon invariant til affine transformasjoner (translasjon, rotasjon etc.)
 
 Stacking Layers
-Bedre å ha mange små enn få store filtere; færre parametre, ekvivalent regneoperasjon.
+    Bedre å ha mange små enn få store filtere; færre parametre, ekvivalent regneoperasjon.
 
 Regne ut Output Spatial Size
-N[l+1] = lower_bound( (N[l] + 2p - k)/s + 1 )
-Output size N[l+1] x N[l+1]
-Input size N[l] x N[l]
-Padding p
-Filter size k x k
-Stride s
+    N[l+1] = lower_bound( (N[l] + 2p - k)/s + 1 )
+    Output size N[l+1] x N[l+1]
+    Input size N[l] x N[l]
+    Padding p
+    Filter size k x k
+    Stride s
 
 Receptive field
-Hvor mange input-piksler er input for et nevron. Generelt bra med stor receptive field; mer effektiv bruk av færre parametre. Kommer gjerne av mange små filtere i dybden (mange hidden layers), heller enn få store i bredden.
+    Hvor mange input-piksler er input for et nevron. Generelt bra med stor receptive field; mer effektiv bruk av færre parametre. Kommer gjerne av mange små filtere i dybden (mange hidden layers), heller enn få store i bredden.
 
 Beregne receptive field
-Layer index l = 1, ..., L
-Filter size k[l] x k[l]
-Stride s[l] x s[l]
+    Layer index l = 1, ..., L
+    Filter size k[l] x k[l]
+    Stride s[l] x s[l]
 
 Rekursjon for receptive field R[l] med R[0] = 1
-R[l] = R[l-1] + (k[l] - 1) * prod__i=1^^l-1 s[i]
+    R[l] = R[l-1] + (k[l] - 1) * prod__i=1^^l-1 s[i]
 
 Nøste opp rekursjon
-R[l] = sum__j=1^^l (k[j] - 1) * prod__i=1^^j-1 s[i]
+    R[l] = sum__j=1^^l (k[j] - 1) * prod__i=1^^j-1 s[i]
+
+
+DEEP ARCHITECTURE EVOLUTION
+
 
 Dropout
-Under trening, tilfeldig sette noen nevroner lik 0 i en iterasjon.
-Støyet fra Dropout reduserer korrelasjon mellom nevroner.
-Systemet blir mer robust, siden det ikke kan avhenge like mye av noen få korrelasjoner; ingen nevroner dominerer outputen.
-Under inferens brukes hele nettverket igjen.
+    Under trening, tilfeldig sette noen nevroner lik 0 i en iterasjon.
+    Støyet fra Dropout reduserer korrelasjon mellom nevroner.
+    Systemet blir mer robust, siden det ikke kan avhenge like mye av noen få korrelasjoner; ingen nevroner dominerer outputen.
+    Under inferens brukes hele nettverket igjen.
 
 Assymetrisk konvolusjon
-3x1-konvolusjon etterfulgt av 1x3 konvolusjon gir samme receptive field som en 3x3-konvolusjon.
-Billigere regnemessig pga. færre parametre.
-Reduksjonen av filterstørrelse gir likevel mindre uttrykkskraft til nettverket.
+    3x1-konvolusjon etterfulgt av 1x3 konvolusjon gir samme receptive field som en 3x3-konvolusjon.
+    Billigere regnemessig pga. færre parametre.
+    Reduksjonen av filterstørrelse gir likevel mindre uttrykkskraft til nettverket.
 
 Residual connections
-Snarveier mellom layers; etter en blokk med f.eks. konvolusjoner, send inputen til den blokken til enden av blokken og konkatener med blokkens output.
-Bidrar til å fjerne problemer med vanishing gradient.
-Gjør at unyttige konvolusjonsblokker kan hoppes over.
-Aldri verre enn identitet (dvs. aldri verre enn om man bare ikke hadde hatt konvolusjonsblokken).
-Kan brukes til at nettverket husker inputen bedre.
+    Snarveier mellom layers; etter en blokk med f.eks. konvolusjoner, send inputen til den blokken til enden av blokken og konkatener med blokkens output.
+    Bidrar til å fjerne problemer med vanishing gradient.
+    Gjør at unyttige konvolusjonsblokker kan hoppes over.
+    Aldri verre enn identitet (dvs. aldri verre enn om man bare ikke hadde hatt konvolusjonsblokken).
+    Kan brukes til at nettverket husker inputen bedre.
 
 Batch Normalization (BN)
-Normaliserer per input-element / feature x_i over alle feature-vektorer i et batch.
-Gir standardnormalfordelte x_hatt_i over minibatchet som normaliseres.
-Deretter Scale and Shift: x_hatt_i-ene går gjennom en enkel affin-transform gamma*x_hatt_i + beta hvor gamma blir nytt standardavvik og beta blir ny mean. Dette gjør at gamma og beta kan trenes.
+    Normaliserer per input-element / feature x_i over alle feature-vektorer i et batch.
+    Gir standardnormalfordelte x_hatt_i over minibatchet som normaliseres.
+    Deretter Scale and Shift: x_hatt_i-ene går gjennom en enkel affin-transform gamma*x_hatt_i + beta hvor gamma blir nytt standardavvik og beta blir ny mean. Dette gjør at gamma og beta kan trenes.
 
 BN for konvolusjon
-Normaliseringen skjer over alle elementer per kanal i et gitt feature map, ikke per element / feature i feature map-et.
-Reduserer antall parametre.
+    Normaliseringen skjer over alle elementer per kanal i et gitt feature map, ikke per element / feature i feature map-et.
+    Reduserer antall parametre.
 
 BN ved inferens
-Ved trening lagrer man løpende mean og sd over hele datasettet.
-Ved inferens normaliseres x_i-ene med de lagrede mean og sd fra hele datasettet, før man igjen bruker skaleringstransformasjonen med de lærte verdiene beta og gamma.
+    Ved trening lagrer man løpende mean og sd over hele datasettet.
+    Ved inferens normaliseres x_i-ene med de lagrede mean og sd fra hele datasettet, før man igjen bruker skaleringstransformasjonen med de lærte verdiene beta og gamma.
 
 Fordeler med Batch Normalization
-Gjør at endringene i parametre ikke skaleres på bagrunn av størrelsen på inputen; gjør nettverket mer robust mot input av forskjellige størrelser.
-Stabiliserer vekst av parametre; store vekter (parameterverdier) gir små gradienter.
+    Gjør at endringene i parametre ikke skaleres på bagrunn av størrelsen på inputen; gjør nettverket mer robust mot input av forskjellige størrelser.
+    Stabiliserer vekst av parametre; store vekter (parameterverdier) gir små gradienter.
 
 Group Normalization
-I stedet for å normalisere per kanal over et batch, grupperer man flere kanaler sammen innenfor ett feature map og normaliserer over disse kanalene.
-Effektivt når man har små batch sizes, og man ellers ville risikert ustabile normaliserte verdier pga. de små batchene.
+    I stedet for å normalisere per kanal over et batch, grupperer man flere kanaler sammen innenfor ett feature map og normaliserer over disse kanalene.
+    Effektivt når man har små batch sizes, og man ellers ville risikert ustabile normaliserte verdier pga. de små batchene.
 
 Layer Normalization
-Tilsvarer BN, men gjøres over alle hidden units i ett og samme layer. Uavhengig av størrelsen på mini-batchet man trener med.
-Nyttig når man ikke ønsker normalisering avhengig av batch size, f.eks. RNNs.
+    Tilsvarer BN, men gjøres over alle hidden units i ett og samme layer. Uavhengig av størrelsen på mini-batchet man trener med.
+    Nyttig når man ikke ønsker normalisering avhengig av batch size, f.eks. RNNs.
 
 Densenet
-Innenfor en konvolusjonsblokk med en gitt feature map size, blir hver layer av feature maps konkatenert med forrige layer sin feature map.
+    Innenfor en konvolusjonsblokk med en gitt feature map size, blir hver layer av feature maps konkatenert med forrige layer sin feature map.
+
+
+BACK PROPAGATION AND OPTIMIZATION
+
 
 Saddelpunkt
-Unngås med Momentum-metoder (ha "fart" nok til å hoppe over punktet)
+    Unngås med Momentum-metoder (ha "fart" nok til å hoppe over punktet)
 
 Stokastisk Gradient Descent (SGD)
-I stedet for å finne gradient over hele treningsbatchen (Batch Gradient Descent / BGD), velg ett sample tilfeldig og beregn GD på det.
-Er mye billigere regnemessig, og forventet verdi av gradienten = gradienten til hele batchet.
-Gir høy varians i gradienten man får.
+    I stedet for å finne gradient over hele treningsbatchen (Batch Gradient Descent / BGD), velg ett sample tilfeldig og beregn GD på det.
+    Er mye billigere regnemessig, og forventet verdi av gradienten = gradienten til hele batchet.
+    Gir høy varians i gradienten man får.
 
 Mini-Batch GD
-Midt imellom SGD og BGD. Velger et gitt antall samples (tilsvarer mini-batch size) og beregner gradient på det. Billigere enn BGD, og gir mindre varians enn SGD.
+    Midt imellom SGD og BGD. Velger et gitt antall samples (tilsvarer mini-batch size) og beregner gradient på det. Billigere enn BGD, og gir mindre varians enn SGD.
 
 Flat region
-Kontinuerlig intervall (ikke bare et punkt) der den deriverte er 0.
-Vanskelig å håndtere; kan gjøres med å vurdere stoppekriterier, om loss er lavt nok, gjøre mange iterasjoner.
+    Kontinuerlig intervall (ikke bare et punkt) der den deriverte er 0.
+    Vanskelig å håndtere; kan gjøres med å vurdere stoppekriterier, om loss er lavt nok, gjøre mange iterasjoner.
 
 SGD med Momentum
-Vanlig SGD:
-    g_t = gradient av l_j mhp. w_t der j er samplet fra 1, ..., N og N er antall samples i hele treningssettet
-    w_t+1 = w_t - eta * g_t
-Med momentum har vi:
-    v_1 = g_1
-    Velocity term: v_t = -eta * g_t + mu * v_t-1
-    mu: Momentum-parameter, typisk mu=0.5, 0.9, 0.99
+    Vanlig SGD:
+        g_t = gradient av l_j mhp. w_t der j er samplet fra 1, ..., N og N er antall samples i hele treningssettet
+        w_t+1 = w_t - eta * g_t
+    Med momentum har vi:
+        v_1 = g_1
+        Velocity term: v_t = -eta * g_t + mu * v_t-1
+        mu: Momentum-parameter, typisk mu=0.5, 0.9, 0.99
 
 Oppdateringsregel med Momentum:
     w_t+1 = w_t + v_t
-Momentum husker altså gamle gradienter, og lar dem bidra i oppdateringen av w_t+1.
-"Farten" gjør det mer sannsynlig å hoppe forbi lokale minima, saddelpunkter etc., men for mye momentum gjør det mulig med overshooting.
+    Momentum husker altså gamle gradienter, og lar dem bidra i oppdateringen av w_t+1.
+    "Farten" gjør det mer sannsynlig å hoppe forbi lokale minima, saddelpunkter etc., men for mye momentum gjør det mulig med overshooting.
 
 Adagrad
-Husker Sum of Squares ved hvert koordinat, som brukes til å skalere gradienten ved hvert koordinat. I koordinater med veldig bratt gradient (derav høy SS) vil endringen bli mindre, mens områder med veldig slak gradient (lav SS) får høyere endring slik at læringen blir raskere.
-Fordel: endringen i parameterverdier går raskere der det ellers ville gått tregt, og saktere der det ellers kunne gått for fort.
-SS kan bli veldig stor veldig raskt, så det kan være ønskelig å nedskalere SS etter noen iterasjoner.
+    Husker Sum of Squares ved hvert koordinat, som brukes til å skalere gradienten ved hvert koordinat. I koordinater med veldig bratt gradient (derav høy SS) vil endringen bli mindre, mens områder med veldig slak gradient (lav SS) får høyere endring slik at læringen blir raskere.
+    Fordel: endringen i parameterverdier går raskere der det ellers ville gått tregt, og saktere der det ellers kunne gått for fort.
+    SS kan bli veldig stor veldig raskt, så det kan være ønskelig å nedskalere SS etter noen iterasjoner.
 
 RMSProp
-Minner om Adagrad, men hvor gamle SS-verdier blir nedskalert iht. en beta-hyperparameter. Med beta vektlegger man hvor mye man vekter nåværende størrelse av gradienten vs. gamle størrelser av gradienten ved de ulike koordinatene.
+    Minner om Adagrad, men hvor gamle SS-verdier blir nedskalert iht. en beta-hyperparameter. Med beta vektlegger man hvor mye man vekter nåværende størrelse av gradienten vs. gamle størrelser av gradienten ved de ulike koordinatene.
 
 ADAM
-RMSProp + Momentum. Fra RMSProp har man nøyaktig den samme skaleringen på oppdateringen av parameterverdier iht. gamle og nåværende gradientstørrelser per koordinat. Dette bakes inn i velocity-termen i Momentum, som ellers ser lik ut som før.
-Denne metoden får altså både fordelen fra momentum av å hoppe over lokale minima, saddelpunkter osv., og å vekte hvor mye parametrene endres ut fra hvor endringen er brattest eller slakest.
+    RMSProp + Momentum. Fra RMSProp har man nøyaktig den samme skaleringen på oppdateringen av parameterverdier iht. gamle og nåværende gradientstørrelser per koordinat. Dette bakes inn i velocity-termen i Momentum, som ellers ser lik ut som før.
+    Denne metoden får altså både fordelen fra momentum av å hoppe over lokale minima, saddelpunkter osv., og å vekte hvor mye parametrene endres ut fra hvor endringen er brattest eller slakest.
+
+
+PERFORMANCE ESTIMATION
+
 
 Kryssvalidering
-Del opp test- og valideringsdataen i n like store deler. Velg en av dem som valideringssett og resten som treningssett. Deretter trener man en modell på treningssettet og evaluerer med valideringssettet som vanlig. Dette gjøres n ganger, en gang for hver del, og produserer n forskjellige modeller.
-Basert på målinger på valideringssettet kan man evaluere performance, modellvalg etc.
-Man kan også bruke de n modellene som blir laget til en ensemblemodell.
+    Del opp test- og valideringsdataen i n like store deler. Velg en av dem som valideringssett og resten som treningssett. Deretter trener man en modell på treningssettet og evaluerer med valideringssettet som vanlig. Dette gjøres n ganger, en gang for hver del, og produserer n forskjellige modeller.
+    Basert på målinger på valideringssettet kan man evaluere performance, modellvalg etc.
+    Man kan også bruke de n modellene som blir laget til en ensemblemodell.
 
 Bootstrapping
-Sample med tilbakelegging fra training + validation-settene og dele opp det samplede settet i training subset og validation subset. Man trener og validerer på disse. Prosessen gjøres mange ganger.
-Generelt foretrukket over kun ett fastsatt validation set. Kan overfitte til hele non-test-settet samlet om det gjøres mye.
+    Sample med tilbakelegging fra training + validation-settene og dele opp det samplede settet i training subset og validation subset. Man trener og validerer på disse. Prosessen gjøres mange ganger.
+    Generelt foretrukket over kun ett fastsatt validation set. Kan overfitte til hele non-test-settet samlet om det gjøres mye.
 
 Representabilitet
-Hvorvidt vårt development set (train + val + test) passer til dataene vi skal bruke modellen på. "Ekte" data kan være helt forskjellig fra dev-settet.
+    Hvorvidt vårt development set (train + val + test) passer til dataene vi skal bruke modellen på. "Ekte" data kan være helt forskjellig fra dev-settet.
 
 Domain Shift
-Forekommer når domenet vårt dev-sett er fra, er et annet enn domenet til de "ekte" dataene vi skal bruke modellen på i virkeligheten.
+    Forekommer når domenet vårt dev-sett er fra, er et annet enn domenet til de "ekte" dataene vi skal bruke modellen på i virkeligheten.
 
 External Test Set
-Datasett for testing som gjerne er hentet fra en forskjellig kilde enn dev-settet, men som passer til den ønskede applikasjonen av modellen.
-F.eks. data fra et annet sted, data fra et annet tidspunkt, etc.
+    Datasett for testing som gjerne er hentet fra en forskjellig kilde enn dev-settet, men som passer til den ønskede applikasjonen av modellen.
+    F.eks. data fra et annet sted, data fra et annet tidspunkt, etc.
 
 Hvordan oppnå generalisering
     Kontrollere nettverkets kapasitet
@@ -186,70 +205,689 @@ Hvordan oppnå generalisering
     Mer mangfoldig treningsdata
 
 Accuracy
-(TP + TN) / n
+    (TP + TN) / n
 
 Precision
-TP / (TP + FP)
-Hvor stor andel av positive klassifiseringer er faktisk positive?
+    TP / (TP + FP)
+    Hvor stor andel av positive klassifiseringer er faktisk positive?
 
 Recall
-TP / (TP + FN)
-Hvor stor andel av faktisk positive data ble klassifisert som positive?
+    TP / (TP + FN)
+    Hvor stor andel av faktisk positive data ble klassifisert som positive?
 
 Average Precision (AP)
-Arealet under Precision-Recall curve
-Måler hvor god modellen var til å predikere riktig klasse for en gitt klasse
+    Arealet under Precision-Recall curve
+    Måler hvor god modellen var til å predikere riktig klasse for en gitt klasse
 
 Mean Average Precision (mAP)
-Gjennomsnittlig AP per klasse
+    Gjennomsnittlig AP per klasse
 
 Sensitivity / True Positive Rate (TPR)
-TP / (TP + FN)
-= Recall
+    TP / (TP + FN)
+    = Recall
 
 Specificity / True Negative Rate (TNR)
-TN / (TN + FP)
-Hvor stor andel av faktisk negative data ble klassifisert som negative?= 1 - Specificity
+    TN / (TN + FP)
+    Hvor stor andel av faktisk negative data ble klassifisert som negative?= 1 - Specificity
 
 ROC curve
-Tilsvarer Precision-Recall curve men for 1-Specificity og Sensitivity
+    Tilsvarer Precision-Recall curve men for 1-Specificity og Sensitivity
 
 AUC eller AUROC
-Areal under ROC-kurven
+    Areal under ROC-kurven
 
 Balanced Accuracy
-(TPR + TNR) / 2
-Nyttig når det er forskjellig antall av forekomster per klasse
+    (TPR + TNR) / 2
+    Nyttig når det er forskjellig antall av forekomster per klasse
 
 Usikkerhet ved performance-estimater
-Estimatene er ikke eksakte - usikkerhet bør måles.
-Konfidensintervallet bør beregnes, f.eks. med Bootstrap KI.
+    Estimatene er ikke eksakte - usikkerhet bør måles.
+    Konfidensintervallet bør beregnes, f.eks. med Bootstrap KI.
+
+
+DATA AUGMENTATION
+
 
 Generalisering (egenskap hos en modell)
-Modellen gir omtrent like prediksjoner for trening- og testdata, når trening- og testdata kommer fra lignende distribusjoner
+    Modellen gir omtrent like prediksjoner for trening- og testdata, når trening- og testdata kommer fra lignende distribusjoner
 
 Domenetilpasning (egenskap hos en modell)
-Modellen gir omtrent like prediksjoner for trening- og testdata, når trening- og testdata kommer fra forskjellige distribusjoner
+    Modellen gir omtrent like prediksjoner for trening- og testdata, når trening- og testdata kommer fra forskjellige distribusjoner
 
 Out-of-distribution (egenskap hos data)
-Et sample er svært forskjellig fra dataene modellen vår var trent på
+    Et sample er svært forskjellig fra dataene modellen vår var trent på
 
 Outliers (egenskap hos data)
-Et sample har svært uvanlige verdier ift. distribusjonene til trening- eller testdataene, men kan likevel være fra de distribusjonene.
+    Et sample har svært uvanlige verdier ift. distribusjonene til trening- eller testdataene, men kan likevel være fra de distribusjonene.
 
 Distribution shift (egenskap hos data)
-Samples som har forskjellige statistiske egenskaper fra dataene vi trente modellen på (de stammer fra en annen distribusjon).
+    Samples som har forskjellige statistiske egenskaper fra dataene vi trente modellen på (de stammer fra en annen distribusjon).
 
 Geometric image transformations
-Endrer geometriske egenskaper; størrelse, form, posisjon, orientering etc.
-Crop er geometrisk.
+    Endrer geometriske egenskaper; størrelse, form, posisjon, orientering etc.
+    Crop er geometrisk.
 
 Photometric transformations
-Endrer lysegenskaper i bilder; f.eks. lysstyrke, kontrast, farge, støy etc.
+    Endrer lysegenskaper i bilder; f.eks. lysstyrke, kontrast, farge, støy etc.
 
 Other transformations
-Kan tolkes som en av de to ovennevnte, eller begge
-F.eks. blur, kantfiltre (Sobel, Canny) etc.
+    Kan tolkes som en av de to ovennevnte, eller begge
+    F.eks. blur, kantfiltre (Sobel, Canny) etc.
+
+Identity Initialization
+    Initialisere vektmatrisen lik identitetsmatrisen, så inputen ikke blir endret.
+    Fordeler
+        Enkelt å gjøre
+        Ikke noe bias i vektene --> bedre generalisering
+        Ingen initiell korrelasjon mellom vektene --> potensielle korrelasjoner må læres (ikke bias)
+        Enhetsgradienter --> får gradienter med størrelse 1 (unngår vanishing/exploding gradients)
+    Ulemper
+        Vekter av diagonalen har ikke signal (=0)
+            Fikses med å legge til lite offset epsilon = 1e-6 f.eks
+        Hovedsakelig nyttig i dypere (senere) layers
+        Ignorerer inputs for layers med færre output-dimensjoner
+        Kan ta lenger tid å konvergere
+
+Orthogonal Initialization
+    A^T@A = A@A^T = I
+    Fordeler
+        Lignende egenskaper som identitetsmatrisen
+            Optimal gradientpropagering (ikke exploding eller vanishing)
+            Ingen initiell korrelasjon
+            Ingen bias
+        Initielt invariant til rotasjon og scaling, gir bedre generalisering
+    Ulemper
+        Kan være numerisk ustabilt i små nettverk
+        Bare kvadratiske matriser. Semi-ortogonale vekter kan være dyre å initialisere
+        Vanskelig å initialisere for konvolusjoner
+
+Random Initialization
+    Vanligste metoden i praksis
+    Bruker vanligvis Gauss/Normal eller Uniform distribusjon med mean=0 for sampling
+    Fordeler
+        Regnemessig billig å initialisere
+        Vet empirisk at det pleier å fungere
+        Normal- og uniform fordeling regnes som ikke-informative distribusjoner
+            Impliserer ikke noe om hva dataene stammer fra
+            Mindre bias
+        Samme fordelinger brukes oftest i Bayesisk statistikk
+        Asymptotisk ortogonalitet
+            Law of Large Numbers: forventet indreprodukt av to vektorer med mean=0 og symmetriske iid. elementer er asymptotisk = 0
+                Store tilfeldig initialiserte mean=0 matriser er derfor omtrent radortogonale.
+            Dette gir oss mange av egenskapene og fordelene til Orthogonal Initialization!
+
+Mer om Weight Initialization
+    Ønsker generelt zero mean
+    Ønsker også samme varians over alle layers
+        Man kan standardisere (sette til standardnormalfordeling) for å oppnå dette
+
+Student-Teacher Learning
+    To nettverk; ett er Student (det man trener), det andre er Teacher (brukes som "fasit")
+    Begge nettverkene får samme input
+    Teacher har fryste vekter, brukes til å lage soft labels av treningsdataene
+    Student og Teacher gir hver sin prediction; Loss-funksjonen sier hvor langt Student var unna Teacher sine prediksjoner.
+
+Contrastive Learning
+    Pre-train på stort datasett uten labels
+    Bruk data augmentation for å lage to forskjellige "views" av samme bilde
+    Trene nettverk til å gjenkjenne endrede instanser av samme bilde
+        Like bilder skal gi høy similarity score
+        Forskjellige bilder skal gi lav similarity score
+        Måles med cosine similarity
+    Krever store batch sizes (mange bilder må vurderes samtidig)
+
+
+OBJECT DETECTION
+
+
+Image classification vs. Object localization
+    Image classification:
+        Klassifiser et bilde med (maksimalt) ett enkelt objekt
+    Object localization:
+        Tegne en bounding box rundt objektet
+        Krever fire verdier:
+            b_r: Center row coordinate
+            b_c: Center column coordinate
+            b_h: Box height
+            b_w: Box width
+
+Loss-funksjon i Object Detection:
+    Cross Entropy loss for klassifisering av objekt (samme som i vanlig klassifisering)
+    L2 loss (avstandsmåling) for bounding box-verdiene
+    De to komponentene legges sammen til totalt loss
+        Bounding box-komponenten legges bare til om et objekt finnes i bildet
+
+Hvordan detektere mange objekter?
+    Få nettverket til å outputte mange bounding boxes og klassifiseringer.
+    Hver output har en default box / anchor box / prior
+    For hver output:
+        Prediker et objekt med lignende form og plassering
+
+Two-Stage Detectors
+    Stage 1
+        Generer mange kandidater (bounding boxes) over hele bildet. Det er vanlig å bruke "anchors"
+            Selective search, Region Proposal Network (RPN)
+        Fjern kandidatene uten et objekt
+    Stage 2
+        For hver kandidat / anchor:
+            Tilordne en kategori/klasse til hver kandidat, og juster dens bounding box
+
+One-Stage Detectors
+    Send bildet gjennom et NN
+    I de siste lagene av nettverket:
+        Sliding window
+        For hver plassering av vinduet:
+            Prediker en objekt-klasse og bounding box for hvert "anchor", dvs. juster ankeret
+
+One-Stage Detectors uten anker:
+    Samme som over, men i stedet for å justere ankeret, predikeres plasseringen av bounding box direkte
+        
+R-CNN (Region-Based CNN)
+    Two-stage detector
+    Stage 1
+        Selective Image Search
+            Ikke maskinlæring, bare en algoritme som gir "regions of interest" / ROI
+    Stage 2
+        For hver ROI:
+            Kjør en CNN på den
+            Predikerer bounding box og class label på den
+
+Fast R-CNN
+    Two-stage detector
+    Stage 1
+        Selective Image Search; likt som i R-CNN
+    Stage 2
+        Kjør CNN på hele bildet, ikke en per ROI
+        Henter ut siste feature map fra CNN-et, og projiserer ROI-ene direkte på det
+        Deretter predikere Bbox og labels på hver ROI, men fra feature map-et
+            Bruker små CNNs på dette per ROI, men det er betydelig billigere enn i vanlig R-CNN
+
+Faster R-CNN
+    Two-stage detector
+    Stage 1
+        Bytter Selective Image Search med 2stk pre-trained CNNs
+            1) Pre-trained CNN for å ekstrahere features fra bildet
+            2) CNN som kalles Region Proposal Network / RPN gir ROIs basert på feature map-et fra 1)
+    Stage 2
+        Nå har man allerede ROIs på et feature map; predikerer Bbox og labels på hver av dem   
+
+Region Proposal Network (RPN)
+    Input-bildet kjøres gjennom et CNN; genererer et feature map
+    I feature map-et plasseres nå mange jevnt fordelte anchor boxes
+    For hver anchor box predikeres nå to ting:
+        Inneholder anchor box-en et objekt eller ikke? Binær klassifisering
+        Box transform (hvordan gå fra ankeret sin form til passende ramme for objektet): regresjonsproblem
+            Dette beregnes bare for anchor boxes som inneholder objekter
+    RPN-et har nå generert ROIs, dvs. tilpassede bounding boxes som ifølge RPN skal inneholde et objekt
+        RPN har altså redusert objektlokalisering til binærklassifisering og regresjon
+    I two-stage detectors brukes ROIs videre til en ny, mer presis prediksjon av Bbox, og klassifisering over alle mulige klasser for et gitt datasett.
+    I one-stage detectors kan man lage ROIs per klasse, og dermed kan RPN også brukes direkte til en fullverdig detector.
+
+Anchor box / Prior / Default box
+    Fra et feature map kan man fordele bounding boxes jevnt over map-et. Disse kalles anchor boxes / priors / default boxes.
+    Anchor boxes brukes som default-punkter hvor man skal gjøre binærklassifisering (kan være per klasse) + Bbox justering / regresjon
+    Anchor boxes brukes gjerne i RPNs som utgangspunkt for å finne ROIs.
+        Typisk plasseres mange anchor boxes på samme plassering, med ulike former og størrelser. Dette pleier å gi bedre resultater, siden objekter kan ha forskjellige former og størrelser.
+
+Single-Shot Multibox Detector (SSD)
+    One-Stage Detector
+    Sekvensiell CNN, starter med et stort nettverk
+    Output feature maps brukes til prediksjon av bounding boxes og klasser, men også som input til mindre CNNs
+    De mindre CNN-ene produserer også stadig mindre feature maps som brukes likt
+    Får bounding boxes av ulike størrelser pga. ulike receptive fields
+
+Feature-Pyramid Networks (FPN)
+    Opprinnelig Two-Stage Detector
+    Har residual connections fra tidligere lag til senere lag for å få "semantic strength" i tidligere lag (oppskalering tilbake til nærmere original størrelse)
+
+Non-Max Suppression (NMS)
+    Fjern alle bokser som ikke har sanns. for objekt av en gitt klasse c_i høyere enn f.eks. 0.5
+    For hver klasse i = 1, ..., k:
+        Lag en liste av usette regioner som først inneholder alle regionene i bildet U_i
+        Lag en tom liste av regioner som skal beholdes K_i
+        Mens det er regioner igjen i U_i:
+            Finn den mest sannsynlige regionen R_max (f.eks. den med størst klassesanns. c_i)
+            Fjern alle regioner som overlapper med R_max fra U_i
+                F.eks. der IOU (Intersection over Union) > 0.5
+            Flytt R_max fra U_i til K_i
+
+Intersection over Union (IoU)
+    Area of Overlap / Area of Union
+    = A snitt B / A union B
+
+Hvordan matche anchors med ground-truth boxes
+    Alternativ 1) For hver ground truth box:
+        Match med anchor box med størst IoU
+    Alternativ 2) For hver anchor box:
+        Finn IoU med alle ground-truth boxes
+        Match anchor box med den ground-truth box-en med høyest IoU
+
+Focal Loss
+    Ligner på CE loss, men lar deg minimere loss-funksjonen mer når sanns. for riktig klasse er høy (når man har et velklassifisert sample)
+    Nyttig for Object Detection fordi veldig gode overlapp er typisk ikke perfekte likevel (f.eks. IoU = 0.9)
+    Reduserer problemer med mye loss fra mange bakgrunnspatches som er ganske riktig klassifisert (f.eks. IoU = 0.7)
+
+Anchor-free approaches
+    Uten anker-bokser
+    I stedet er outputen:
+        Klasse
+        Venstre, høyre, topp, bunn
+        "Sentrum" av objektet
+        
+Måling av performance metrics
+    Man bruker Precision, Recall, AP, mAP som ellers, men:
+        Man må sette IoU Threshold for at en output skal klassifiseres som "true positive" etc.
+
+
+SEMANTIC SEGMENTATION
+
+
+Semantic Segmentation
+    Klassifisere hver piksel i et bilde til en klasse
+    Trenger store receptive fields for å fange global kontekst (å bare se individuelle piksler eller små områder gir ikke mening)
+
+Hvordan fange global kontekst
+    1) Downsampling med max/avg pooling, conv med stride > 1 osv.
+        Etterfølges av upsampling, dvs. forstørre tilbake til opprinnelig oppløsning
+        Gjøres med "dekonvololusjon" / transponert konvolusjon eller unpooling, eller andre teknikker
+    2) "Dilatert" konvolusjon
+
+U-Net
+    Nedsampling med conv og max pooling
+    Upsampling med up-conv (transponert konvolusjon)
+    Bruker også residual connections til å knytte tidligere feature maps til senere
+
+Dilated / Atrous convolution
+    Man kan justere dilation rate r
+    Erstatter downsampling layers
+    Høyere dilation rate tilsvarer mer downsampling
+
+Instance segmentation
+    Bare tilordne labels til piksler tilhørende objekter (ikke bakgrunn)
+    Forskjellige labels for forskjellige instanser av samme klasse
+        To objekter av samme klasse blir markert forskjellig f.eks.
+    Gjøres med object detection
+        Genererer masker for hvert objekt
+        Mask R-CNN
+
+Mask R-CNN
+    Tilsvarer Faster R-CNN, men outputter også en maske parallelt med Bbox og class predictions.
+
+Performance Metrics i Image Segmentation
+    Mean IoU
+        Den mest populære metrikken
+        = Gjennomsnittlig IoU over alle klasser
+        Brukes hovedsakelig i semantic segmentation (ikke instance segmentation)
+    Mask mAP
+        Tilsvarer mAP for object detection, men IoU beregnes for masken og ikke en boks
+        Brukes mest for instance segmentation (ikke semantic)
+
+Loss-funksjoner
+    Semantic segmentation
+        CE loss per piksel
+        Summeres over alle piksler
+    Instance segmentation
+        Trenes felles med object detection, så har de samme loss-ene
+            Classification loss (CE f eks)
+            Regression loss (Bounding box error, typisk L2)
+            Mask loss (IoU)
+            
+
+ADVERSARIAL EXAMPLES
+
+
+Typer angrep
+    White Box attacks
+        Angriperen har tilgang til modellens parametre (de kan endres på og trenes)
+    Black Box attacks
+        Angriperen har ikke tilgang til modellens parametre, kun til outputs
+
+Adversarial image
+    Så vidt modifisert bilde med hensikt å endre klassifiseringen til modellen
+
+Untargeted attack
+    Vi ønsker bare en feilklassifisering av et bilde x, ikke viktig hvilken klasse
+    Legger til et offset delta slik at x + delta klassifiserer til en annen klasse enn den sanne klassen
+
+Targeted attack
+    Vi ønsker å klassifisere x til en spesifikk klasse c, som ikke er den sanne klassen
+    Legger til et offset delta slik at x + delta klassifiserer til en gitt klasse c
+
+Iterative gradient descent og ascent
+    Ascent vekk fra sann klasse
+        Vi ønsker å oppdatere delta ved å maksimere loss mhp. den sanne klassen c0, altså følge gradienten vekk fra der den klassifiserer x til den sanne klassen c0
+        Stopper når nettverket feilklassifiserer x
+    Descent mot den minst sannsynlige klassen
+        Finner minst sannsynlig klasse c*
+        Oppdaterer delta ved å minimere loss mhp. denne klassen c*, og følger gradienten i retning mot der modellen gir minst loss mhp. denne klassen
+        Stopper når nettverket feilklassifiserer x
+        Hvis vi ønsker en spesifikk klasse (targeted attack) setter vi c* lik den klassen
+    Disse to metodene kan kombineres sammen i en samlet loss-funksjon
+
+Projected Gradient Methods
+    Vi ønsker å sikre at x + delta ligner nok på originalen x
+        Må derfor sikre at delta << 1 på en fornuftig måte
+    Projected Gradient Ascent
+        Nesten akkurat som iterative gradient ascent, men projiserer delta ned på en epsilon-ball slik at normen av delta alltid er innenfor en toleranse epsilon
+        Projeksjonen kommer an på valg av norm (bestemmer størrelse), f.eks. L2
+        Iterativt endrer delta; stopper når prediksjonen endres fra originalklassen
+    Kan som før gjøres både med ascent vekk fra riktig klasse og descent mot en annen klasse
+
+Vanlige problemer med angrep
+    Invalid bounds
+        x må være innenfor visse verdier, f.eks. [0, 1] i hver piksel
+            Vanskelig å justere x + delta i så fall
+    Quantization
+        x har kvantiserte pikselverdier, som kan gjøre angrep mindre effektive
+    Compression
+        Kompresjon (av bilder) kan fjerne den ønskede effekten av delta
+
+Fast gradient sign
+    Delta bestemmes bare en gang (ikke iterativt) med en eta-verdi og fortegnet til gradienten (mhp. sann klasse c0)
+    Kjapp måte å lage mange adversarial examples, men ikke like sannsynlig å lykkes
+
+Iterative gradient sign
+    Iterativ versjon av Fast gradient sign
+    Finner bare fortegn av gradienten og går i den retningen med fast verdi
+    Bruker projisering som i Projected Gradient for å begrense endring i delta
+
+Universal Adversarial Attack
+    For andre metoder har delta bare vært per bilde x
+    Ønsker her å finne en delta for alle bilder x som gir høy sanns. for feilklassifisering
+    For hvert bilde x_i:
+        Hvis nåværende delta ikke feilklassifiserer bildet:
+            Bestem den minste mulige endringen i delta slik at x_i + delta nå blir feilklassifisert
+            Projiser denne deltaen på en epsilon-ball, og lagre denne nye delta-verdien
+    Gjentas til konvergens
+
+Complex decision boundaries
+    Fordi vi er i høydimensjonalt rom, kan decision boundary være helt vilkårlig / utrent i mange av dem
+    Da kan små delta-endringer i en dimensjon gi store utslag på klassifiseringen pga. den vilkårlige desisjonsgrensen
+
+Well-posedness
+    Betegnelse på problemer som er "mulige å løse"
+    Et problem er well-posed hvis:
+        En løsning finnes
+        Løsningen er unik, dvs. kun en måte å nå løsningen
+        Løsningen (i output-domenet) endres kontinuerlig med endring i input; den er stabil
+
+Ill-conditioning
+    Selv om mappingen f(x) er stabil (den er kontinuerlig), kan små endringer i x gi veldig store endringer i output
+        --> Ill-conditioning
+    Lipschitz-kontinuitet: Er avstanden f(x) - f(x') <= x - x' for alle x, x'?
+        Hvis ja er f(x) Lipschitz-kontinuerlig
+        Ønskelig; betyr at modellen er mindre sensitiv for delta
+    Kan motvirke ill-conditioning med regularisering! F.eks. L2-regularisering
+
+Stokastisk vs. adversarial perturbation
+    Stokastisk: Sampler en endring basert på en sanns. fordeling
+    Adversarial: Velger den delta-verdien som gir "verst" output
+        Sikter på worst case
+
+Forsvar mot adversarial attacks
+    Weight decay (L2-regularisering) og Dropout
+        Gjør modellen generelt mer robust
+    Data augmentation
+        Gir robusthet mot transformasjoner, øker n (antall samples)
+    Label smoothing
+        Gjør at loss-landskapet blir kontinuerlig, ikke loss=1 for feil klasse og 0 for riktig
+            Slik skal det mer til for plutselige endringer i klassifisering
+    Smooth activations
+        Alle aktiveringer som er kontinuerlige, f.eks. sigmoid, ELU, GELU etc.
+        Antagelig samme idé som label smoothing
+
+Alternative forsvar
+    Adversarial training
+        Bruk Projected Gradient Descent (PGD) for å finne universell delta
+        Tren nettverket videre som vanlig, men hvor delta legges til alle x
+    Quantization in preprocessing
+        Benytte seg av at kvantisering pleier å nøytralisere støyen fra delta i angrepet
+        Kvantisering (som nevnt over): redusere bit-representasjonen til bildet
+        Kompresjon (som nevnt over): JPEG f.eks.
+    Ensemble defence
+        Om modellen består av flere små modeller i ensemble, er det vanskelig å finne støy som lurer alle modellene
+
+Om forsvarsstrategier
+    Enklere strategier som regularisering, kvantisering og komprimering er kostnadseffektive, men kan gå utover bildekvalitet
+    Mer avanserte metoder er dyre
+
+
+RNNs
+
+
+RNN-strukturer
+    1-til-1
+        Vanlig feed-forward NN
+        En input, en output
+    1-til-n
+        En input, mange outputs
+        F.eks. Image captioning (sekvens med ord genereres fra ett bilde)
+    n-til-1
+        Mange inputs, en output
+        F.eks. Sentiment Analysis (kategorisere en sekvens med tekst)
+    n-til-n
+        Mange inputs, like mange outputs
+        F.eks. Grammatisk tagging (kategorisering per ord i en tekst)
+    m-til-n (Encoder-Decoder)
+        Mange inputs og outputs, kan være forskjellig størrelse
+        F.eks. tekstgenerering
+
+Backpropagation Through Time (BPTT)
+    Bokstavelig talt bare vanlig BP
+    Beregnes fra loss til hver eneste output, som vil si at den rulles ut "gjennom tid"
+    Truncated BPTT: ikke gå gjennom alle lag, stoppe på et tidspunkt og oppdatere vekter som om vi er ferdig
+        Deler inputs opp i "batches" på tvers av tid
+        Krever mindre minne, oppdaterer raskere
+        Ulempe: fanger ikke tidsavhengigheter mellom "batches"
+
+Hvordan håndtere exploding og vanishing gradients
+    Gradient clipping
+        Clipping av gradient hvis den er større enn en viss terskel
+    Ortogonal initialisering av vektene
+
+LSTM
+    Cell state
+        Intern matrise C som fungerer som minne mellom celler
+        Ny cell state C_hatt_t beregnes fra matrisemultiplisering av input x_t, hidden state h_t-1 og vekter W, som aktiveres med tanh. Dette konkateneres med input gate, og legges deretter til C_t-1 for å få C_t
+    Input gate
+        Input x_t fra nåværende tidspunkt stackes med hidden state h_t-1 fra forrige timestep, matrisemultipliseres med vektene W og aktiveres med sigmoid, før det konkateneres med ny cell state
+    Output gate
+        Beregnes eksakt likt som input gate, brukes til å bestemme hvor mye av C_t som skal med i cellens output hidden state h_t
+    Cellens output
+        h_t = o_t * h_hatt_t = o_t * tanh(C_t)
+    Forget gate
+        Akkurat lik aktivering som input og output gate. Konkateneres med C_t-1 før C_t-1 og C_hatt_t legges sammen
+        Bestemmer om forrige Cell state skal "glemmes"
+            Hvis sigmoid-aktiveringen er ca lik 0, glemmes C_t-1
+            Hvis sigmoid-aktiveringen er ca lik 1, beholdes C_t-1
+    LSTM husker bedre gamle states over lang tid
+
+Gated Recurrent Unit (GRU)
+    Variant av LSTM; oppnår det samme
+
+Multi-layer RNNs
+    Stacking av mange hidden layers i dybde (ikke tid) gir mer kompleksitet
+    Typisk ikke mer enn 2 eller 3 lag dypt.
+
+Bidirectional RNNs
+    I noen anvendelser gir det mening å "se fremtiden". Da kan toveis RNN "se" og backpropagate i begge retninger
+
+
+VISION TRANSFORMERS
+
+
+Attention
+    Intuisjon: outputs ser alle inputs, men fokuserer på mer relevante inputs
+    For hver input: genererer query, key og value vectors
+        Bruker query, key og value matriser Wq, Wk og Wv
+    Indreprodukt av query og key vectors bestemmer hvor mye attention hver input får i beregning av output
+    Query vector fra decoderen krysses med key til alle inputs i encoderen, og genererer attention scores
+    Attention scores softmaxes over for å gi attention weights
+    Alle inputenes value vectors summeres vektet med attention weights for å lage en context vector
+    Den brukes sammen med hidden state i decoderen til å generere output
+    Dette gjentas helt til EOS-signal blir generert av decoderen.
+
+Self-attention
+    1) Multipliser x_i med Wq, Wk og Wv for å generere de tre tilhørende vektorene
+    2) Beregner scaled dot product attention med key og query vektors tilhørende hver x_i
+        Finner slik hvilke x_i-er som "hører til hverandre"
+        En score genereres per K_i, Q_i-par
+            Dvs. hver x_i får en vektor med verdiene fra kryssing med alle de andre x_j-ene
+    3) Alle score-vektorer sendes gjennom softmax for å få softmax-scores
+        Disse brukes som attention weights for hver x_i
+    4) Multipliser alle value vectors tilhørende x_i-er med attention weights for å få vektede value vectors
+            Dvs. en vektet value vector per x_i
+    5) Summer alle de vektede value-vektorene sammen til en output vektor z_i
+        Det lages en z_i per x_i; dette er attention vectoren til x_i
+    Alt dette regnes som et attention head
+    For å ikke la attention se inn i fremtiden (om ønskelig), setter vi similarity score =-inf for å få attention score =0 i kryssing mellom "nåtid" og "fremtid"-x_i-er
+        Dette er Masked self-attention
+            
+Postitional encoding   
+    Self-attention er permutation equivariant
+        Bryr seg ikke om rekkefølge på inputs; vi må selv håndtere det når rekkefølge er viktig
+    Legger til Postitional encoding: en vektor med samme dimensjon som x_i
+
+Multi-head Self-attention
+    Betyr bare at man har flere Self-attention heads i parallell
+    Hvert attention head har separate parametre
+    For hver x_i får vi like mange z_i som vi har attention heads
+    Alle attention head outputs konkateneres likevel ned til en z_i per x_i
+
+Transformer Encoder Block
+    En block med regneoperasjoner i encoderen. Består av:
+        Input: sett med vektorer x_i
+        1) Multi-head Self-attention (output: z_i)
+        2) Residual connection til x_i: Add & Layer Normalization (output: norm(z_i + x_i))
+        3) Feed-Forward NN på hver vektor individuelt (output: z_i)
+        4) Residual connection til output fra 2): Add & Norm (output: norm(z_i_ny + x_i_gammel))
+        Output: sett med context vectors z_i (en per x_i)
+    Har gjerne mange slike blokker sekvensielt i encoderen
+    Positional encoding legges til input x_i før man går inn i encoderen (bare en gang)
+
+Encoder-Decoder Attention
+    Operasjon som skjer inne decoderen
+    Samme prinsippet som Self-attention, men attention beregnes ift. ekstern input (fra encoderen)
+    Input fra decoderen (tidligere z_i) transformeres til to sett med key- og value-vektorer k_i og v_i (en per z_i)
+    Input fra tidligere i encoderen z_i brukes nå til å lage query vectors q_i (en per z_i)
+    Encoder-Decoder Attention måler altså likheten mellom ordene decoderen allerede har predikert, og inputen til encoderen, for å dekode hva som skal bli det neste ordet i output fra decoderen
+
+Transformer Decoder Block
+    En block med regneoperasjoner i decoderen. Består av:
+        Inputs
+            Start-Of-Sequence vector x_0
+            Hver tidligere output x_i legges til sekvensielt
+            Et sett med context vectors c_i (tilsvarer z_i fra encoderen)
+        1) Masked Multi-head Self-attention (output: z_i)
+            Interagerer bare med tidligere inputs
+        2) Residual connection til x_i: Add & Layer Normalization (output: norm(z_i + x_i))
+        3) Encoder-Decoder Attention
+            Input:
+                c_i fra encoderen, konvertert til k_i og v_i
+                z_i fra 2), konvertert til q_i
+            Output: z_i
+        4) Residual connection fra 2) --> Add + Norm
+        5) Feed-Forward NN på hver vektor individuelt (output: z_i)
+        6) Residual connection til output fra 4): Add & Norm (output: norm(z_i_ny + z_i_gammel))
+        Output: sett med vektorer z_i (attention vectors)
+    Positional encoding gis også til inputen x_i inn i decoderen
+    Etter siste Decoder Block:
+        Fully Connected layer m/ Softmax
+        Input: attention vectors z_i
+        Output: softmax scores og predikert token y_i
+
+Transformer
+    Et nettverk bestående av Encoder-Decoder arkitekturen beskrevet ovenfor
+    Bruker Self-attention, i motsetning til andre Encoder-Decoder-arkitekturer som ikke har det
+
+Vision Transformer (ViT)
+    Behandle bilde som sekvens av piksler
+        Flat ut bildet og gi som input
+    Problem: tar veldig mye minne
+    Ide: bruk transformeren på mindre patches av bildet
+        1) Lager N patches, dvs. deler av bildet
+        2) Flater dem ut til D-dimensjonale vektorer
+        3) Legger til en lært positional embedding (man husker da rekkefølgen av patches)
+        4) Vanlig Transformer-encoder
+        5) Output fra encoderen gir context vectors
+        6) Bruker context vectors i linear layer for klassifisering
+
+Swin Transformer
+    Siden alle blokkene i ViT-encoderen har samme dimensjoner på vektorer, forblir image resolution og ant. kanaler like gjennom hele nettverket
+    Swin er en hierarkisk ViT-modell
+    1) Deler bildet opp i patches projisert i C dimensjoner
+    2) Lineær embedding (vektor) med posisjonsenkoding
+    3) Swin Transformer-blokk (som encoderen i ViT over). Output er context vector per patch
+    4) Patch Merging
+        For hver gruppe av 2x2 patches, konkatener deres 4 tilhørende vektorer (blir en størrelse 4xC-matrise)
+        Send 4xC-matrisen gjennom en lineær layer for å få vektorer av størrelse 2C
+    5) 2-4 er en blokk som kan gjentas flere ganger
+    Slik oppnår man hierarkisk endring i størrelse; patches blir slått sammen og vokser i praksis jo dypere man kommer i nettverket.
+
+Object Detection med Transformers: DETR
+    Ankerfri object detection pipeline - gir direkte Bbox-prediksjoner fra Encoder-Decoder-modellen
+    Trenger ikke NMS for å fjerne bakgrunnsbokser; det gjøres automatisk
+    1) Et ConvNet brukes til å lage feature map
+    2) 1x1 conv for å redusere antallet kanaler
+    3) Feature maps flates ut (i patches), legger til posisjonsenkoding
+    4) Flatede feature maps sendes inn i transformer (Encoder-Decoder)
+    5) Decoderen gir ut outputs; hver object query outputter en Bbox
+
+
+DISTRIBUTION SHIFTS
+
+
+Bakgrunn
+    Distribusjon til treningsdata != distribusjon til testdata
+       
+Typer distribution shift
+    Covariate shift
+        p_tr(x) != p_te(x)
+        I "virkeligheten" er kovariatene våre uvanlige å se
+    Label shift
+        p_tr(y) != p_te(y)
+        I virkeligheten er andelen av instanser i ulike sanne klasser annerledes
+    Output noise shift
+        p_tr(y|x) != p_te(y|x)
+        I virkeligheten ville våre observerte data ofte vært klassifisert annerledes
+    Class-conditional shift
+        p_tr(x|y) != p_te(x|y)
+        I virkeligheten ville en gitt klasse ikke hatt de verdiene vi observerer
+    Full distribution shift 
+        p_tr(x, y) != p_te(x, y)
+        Våre data er usannsynlige å finne i virkeligheten
+
+Covariate shift
+    Forekommer når trening- og testdata er fra ulike domener
+
+Label shift
+    Kan forekomme av at målinger er gjort f.eks. fra forskjellige kilder med ulike statistikker, men samme forutsetninger (i.e. like kovariater gir lik respons)
+
+Empirical Risk Minimization (ERM)
+    Gjøres over p_tr(x,y)
+    Ikke garantert at de trente vektene generaliserer til p_te(x,y)
+
+Distributionally Robust Optimization (DRO)
+    Minimer forventet tap over et sett av flere distribusjoner Q
+    Q inkluderer mulige testfordelinger
+    DRO kan være for pessimistisk
+
+Importance-Weighted ERM (IWERM)
+    Velg w som minimerer E_p_tr(x,y) [(p_te(x,y)/p_tr(x,y)) l(f_w(x), y)]
+    Ligner på ERM, med tillegget av viktighetsratio (tetthetsratio) r(x,y)
+        r(x,y) = p_te(x,y)/p_tr(x,y)
+    IWERM konvergerer mot å minimere test-error
+        Man minimerer altså forventet loss under trening, men hvor man vekter eksempler som er sannsynlige å forekomme i testsettet høyt
+
+Density Ratio / Importance Ratio
+    r(x,y) = p_te(x,y)/p_tr(x,y)
+    Gitt at p_tr(y|x) = p_te(y|x) = p(y|x), har man:
+        r(x,y) = p_te(x)/p_tr(x)
+    Gitt at p_tr(x|y) = p_te(x|y) = p(x|y), har man:
+        r(x,y) = p_te(y)/p_tr(y)
+    Å estimere r(x,y) kan skrives som et konvekst optimiseringsproblem
+
+    
 
 
 
