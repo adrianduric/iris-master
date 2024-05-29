@@ -1,0 +1,35 @@
+V17
+
+2a) Such an initialization is not robust. It would lead to the network not being able to update any weights in hidden layers differently from each other, as all weights would have the same partial derivatives.
+
+b) If a value lower that 0 passes through ReLU, ReLU outputs 0, and in backpropagation the value flowing through ReLU also becomes 0. This could lead to dead neurons in training the network.
+
+c) Dropout works so that in training, each weight has a given probability (hyperparameter, typically a low value) of being set to 0 for an iteration, effectively excluding it from the network from that iteration and the weight stand still (not update) for that iteration. This leads to other weights' gradients not being affected by the dropped weight during backpropagation, making them more dependent on correlations to other elements in the network. Doing Dropout leads to the network being less dependent on certain dominating weights. Then, other weights contribute more to making predictions, making the network more robust.
+
+d) Gradient checking is performed by calculating the gradient of J(theta) w.r.t. theta manually, and seeing if a network outputs a similar value. If it is outside of a numerical tolerance, this method has then identified a possible error when updating the weights of the network.
+
+e) Momentum works by keeping "memory" of what direction the gradient has moved the weights in previous iterations, essentially functioning as a sort of initial velocity. GD with momentum functions by performing normal GD, but updating the weight by adding the velocity term in addition to the contribution from the gradient itself. This can increase convergence speed, and help the weights skip past local minima, saddle points and flat regions.
+
+f) By making the standard deviations depend on the size of the input (in practice meaning SD is decreased as input size increases), we make sure that the weights aren't too big so that backpropagation becomes unstable (avoiding exploding and vanishing gradients). We also want to make sure that weights corresponding to all parts of the input are given the possibility to be updated properly, not making the network's prediction only depend on specific parts of the input. This may happen if certain weights are very large compared to others, making it important to control SD of weights.
+
+Also, regularizing the weights (by decreasing their SD) helps the network avoid overfitting, as large weights can more easily overfit to noise in the input data.
+
+3c) Each 3x3 filter has 27 parameters (9 per channel), each 5x5 has 75 (25 per channel), each 7x7 has 147 (49 per channel). Layer 1 has 2x27 = 54 parameters, layer 2: 2x75=150, layer 3: 2*147 = 294. In total 54 + 150 + 294 = 498 parameters.
+
+d) We can set a high dilation rate, which works equivalently to downsampling in increasing the FOV in deeper layers, without changing the spatial size of the feature map after the dilated convolution.
+
+e) Audio data is in the frequency domain. As it happens, convolution in the image domain is equivalent to elementwise multiplication in the frequency domain, meaning convolution can be a suitable way to operate on audio data, when first transforming the audio data to the image domain. Furthermore, one gains all the other advantages of CNNs over standard FFNNs, such as fewer parameters and translation invariance.
+
+4a) Residual networks have residual connections between layers, meaning earlier layers (including input layers) are multiplied "back in" with later layers. This allows their weights to influence inference in deeper layers, and also makes their weights be updated earlier during backpropagation. This leads to the network being able to bypass whichever blocks may be obsolete through gradient descent, and helps avoid vanishing gradients.
+Standard FFNNs have sequential layers, meaning every layer is only connected to the previous and next one, never multiple ones.
+
+b) With little labelled training data, data augmentation is one important technique; you take the data you have and apply some random, noisy transformation to it (e.g. a geometric transformation, photometric transform etc.), increasing the size of the dataset while also making it more robust through the added noise.
+Another technique is residual connections, which helps the network avoid overfitting in the case of little labelled data. It sends the signal from the input and early layers deeper into the network, making it so that the depth of the neural network doesn't overly increase the risk of overfitting.
+
+6a) Images are very high-dimensional, meaning the decision boundary is equivalently high-dimensional. In such cases, unless the size of the training set is extremely large, the decision boundary is typically arbitrary in at least some of the dimensions. Then, knowing the network weights, one could construct an offset for the image that passes the decision boundary in some dimension so the network outputs a different prediction, but a human wouldn't notice the offset because it seems arbitrarily small to us. This can be achieved through iterative gradient ascent using the gradient of the loss w.r.t. the offset to increase the loss of the network, and/or gradient descent towards some other class, making the delta change towards making the image classify it as some other class.
+
+7a) Deep learning will probably work better for high-dimensional complex data like images, because DL are the models most capable of learning patterns in such high-dimensional data. Non-deep ML models may work better than DL for less complex data, such as linearly correlated data. A small ML network would be able to learn the correct, linear decision boundary. A DL network would likely also be capable of the same, but with an added risk of overfitting due to learning the noise of the dataset.
+
+b) The output of a Q network represents Q-values, that is the state value of whichever state x was the input to the network.
+
+c) Reinforcement learning works by choosing an action and evaluating the state that the action put us in. This is similar to hard attention, where only the sub-region with the highest attention score is selected. RL may then be appropriate to evaluate whether the "value" of some choice using hard attention.

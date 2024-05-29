@@ -1,0 +1,62 @@
+V18
+
+1a)
+a1 = b1 + w11x1 + w21x2 = 1 + 2*1 + 2*3 = 9
+a2 = b2 + w12x1 + w22x2 = 0 + 1*1 - 1*3 = -2
+a3 = b3 + w13x1 + w23x2 = -1 + 3*1 + 1*3 = 5
+
+ŷ = b + w1a1 + w2a2 + w3a3 = 1 + 3*9 + 1*-2 + 2*5 = 36
+
+b)
+a1 = ReLU(9) = 9
+a2 = ReLU(-2) = 0
+a3 = ReLU(5) = 5
+
+b + w1a1 + w2a2 + w3a3 = 1 + 3*9 + 1*0 + 2*5 = 38
+
+ŷ = ReLU(38) = 38
+
+2b) The dimensions of the image is CxHxW, where C is channels, H is height and W is width. The dimensions of the filter bank are NxCxHxW, where C, H and W are the same (the filter slides across pixels in the HxW space), and N is the number of filters. Each filter outputs one corresponding 2-dimensional feature map (after pooling across channels), which means the dimensions of the feature map after the convolutional layer becomes NxHxW.
+
+3a) The hypothesis set is the set of possible hypotheses, i.e. the set of possible models to describe connection between covariates and response in the dataset. Regularization loss leads to smaller weights in order to minimize the loss. While it does not technically change the hypothesis set as all the same models are still possible when regularization is added, it changes which hypothesis becomes the optimal one to describe the data; the optimal solution will typically have smaller weights.
+
+b) By using the test set to select a model, one has in fact "looked at" the test set in order to influence model optimization through selection. Thus, the test set no longer is a valid representation of unseen data, as it has been used while the model is still being adjusted. One would then have to get new, unseen data and use it to test the selected model, and that model only, in order to estimate out-of-sample error properly.
+
+4a) The target vector y would contain one-hot-encoded values per class (1 for the true class and 0 for the other classes), in addition to four values that specify a bounding box for the object. The four values could be:
+
+b_x: Could for instance be the x coordinate of the top left corner pixel of the bounding box (or some equivalent placement to specify where in the image the bounding box is)
+b_y: Would equivalently be the y coordinate of the same corner pixel
+b_h: The height offset from the specified pixel in the two values above, gives height of the bounding box
+b_w: The width offset from the specified pixel in the two values above, gives width of the bounding box
+
+The output vector would be equivalent, though the values would of course be predictions of the model.
+
+b) The loss function would be split in two parts: one would be classification loss, which could for instance be CE loss similarly to in standard image classification. The other part would be a regression loss like MSE loss. The first part would penalize wrong classification, and the second would penalize poor placement and offset of the Bbox-values.
+
+5a) H_t = f(H_t-1, x_t) where H_t is hidden state for time t, which depends on input x_t at timestep t and the last hidden state H_t-1 at timestep t-1.
+
+b) As the RNN grows longer, the gradients from earlier states vanish during BPTT, meaning earlier states contribute less and less to predictions the further back the backprop signal is calculated. This means old states are in essence forgotten.
+
+c) GRUs contain cell states as well as hidden states, which function as "memory" from previous cells. The gates in GRUs decide how much the input, hidden state and cell state should contribute to influencing the output hidden state from a cell. Specifically, the forget gate influences how much the cell state (the "memory") should influence hidden state output.
+
+d) TBTT reduces the memory requirement for backprop, which is useful for long RNNs with many cells. However, each truncated section receives no signal during backprop from earlier cells, meaning TBTT reduces the RNN's ability to have long-term memory.
+
+e) The ConvNet would first perform normal convolution on the image and be used to generate a descriptive input vector to the RNN, containing information from the image. The RNN would then receive the input, and based on a vocabulary generate a sequence of tokens depending on the output of the CNN to create a description in natural language.
+
+6a) Supervised learning has labelled data, and trains a network to represent the connections between features and the label of a given sample. Unsupervised learning deals with unlabelled data and tries to separate differently distributed data in various ways, for instance through clustering. Reinforcement learning concerns agents acting in environments, and works by training a network to instruct an agent to behave in some optimal way in the environment depending on how the environment responds to actions by the agent.
+
+b) The autoencoder is trained to denoise images by using the denoised image as a target. The autoencoder receives the image with added gaussian white noise as input, and is then trained to minimize loss by making its output as similar to the denoised image as possible. This way, the autoencoder learns the representation of the image in its weights.
+
+c) A VAE is a generative model used for generating images. It is trained similarly to how it is described in b), so that the network can produce an image from only gaussian noise.
+
+7c) Batch normalization is done by calculating the mean and standard deviation across a batch, then subtracting the mean to each sample and dividing it by the standard deviation to normalize their values. This is then performed to batches of images and feature maps in various layers of the network.
+
+
+
+
+
+
+
+
+
+
