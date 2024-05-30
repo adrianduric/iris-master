@@ -35,5 +35,42 @@ e)
     2) Max pooling is sensitive to local outlier values, as some values may be much larger than the surrounding ones (a median pooling filter, for instance, would not have the same problem).
 
 f)
-One way would be to design it like a U-Net; first convolutions and downsampling to reduce the feature map to a small size with a large receptive field, then upsample through e.g. deconvolution to take the feature map back to 
+One way would be to design it like a U-Net; first convolutions and downsampling to reduce the feature map to a small size with a large receptive field, then upsample through e.g. deconvolution to take the feature map back to larger sizes of previous feature maps in the network. After each stage of upsampling, a feature map of corresponding size from the earlier convolution/downsampling layers is added to the upsampled feature map, allowing local and global information from earlier and later stages to be combined. Finally, the resulting feature map will have been upsampled to the original scale of the input image, and values on each pixel of the feature map is used to calculate class probabilities for each pixel in the original image, after these values are softmaxed per pixel to produce probabilities for each class. I would use cross-entropy loss per pixel, signifying how far off each pixel's prediction was from the pixel's true value.
 
+3a) GD with momentum alters the parameter update rule by adding a velocity term in addition to the gradient (which functions as in standard GD). The velocity term is essentially the gradient from the last timestep, discounted by some hyperparameter value. Thus, the velocity term functions as "memory" of where the parameter being updated was headed in previous update steps. GD with momentum helps skip saddle points, flat regions and local optima during parameter updates.
+
+3c)
+    1) Using ReLU or similar activation functions, as the gradient in the positive region is always 1, meaning the gradient will not vanish in this region (Leaky ReLU can be a better option to avoid vanishing gradients in the negative region).
+    2) Regularization (for instance L2), as this tends to lead to smaller weights and larger gradients. Typically, large weights in magnitude lead to very small gradients, which is not the case for smaller weights.
+    3) Residual connections make parameters in earlier layers of the network more closely connected to the final loss function in terms of chain rule, meaning it increases gradient flow and lowers the risk of vanishing gradients due to being far back in the network.
+
+4a)
+    Transfer learning can be done by using pretrained weights from an already existing network, and then finetuning by traning more specified on whichever dataset one wants to optimize the model for.
+
+b) 
+    Geometric transforms: change the geometric representation of the data, for instance by translation, rotation, cropping, etc.
+    Photometric transforms: change the photometric properties of the data, for instance through modifying brightness, solarization, changing contrast etc.
+    Other transformations: change properties of the data (may be somewhat related to either geometric or photometric) in various ways: add blur, apply various filter transformations like Sobel or Canny, etc.
+
+c)
+In region 1, the training of the model leads to the model fitting to the training data appropriately so it still represents unseen (test) data well. It typically learns the correlations of the features, but without fitting to the noise present in the training data.
+
+In region 2, past the optimal capacity line, the model has trained for too long and starts to overfit to the training data, learning whatever noise it contains and making it less representative for unseen data (which is why the test error increases). The double arrow shows the discrepancy between training and test error, which may act as a measure of how overfitted the model has become (especially after the decrease in training loss starts to flatten).
+
+d)
+The maximum value would be achieved when no parameters are dropped. Then, z = w1x1 + w2x2+ w3x3 + w4x4 = 10 + 1 + 7 + 4 = 22
+
+e)
+The minimum value would be if all parameters are dropped out (set to 0). Then z = 0.
+
+5a)
+The last layer essentially contains the response values from the convolution, giving local information of where specific patterns were found. Given that we have vectors of these values per pixel in the feature map (i.e. several stacked feature maps), we could average the values of these per pixel, rescale the image to input resolution and overlay the resulting features as a heatmap on top of the input image. Then, higher values would have higher "heat", and one could see on the input map which parts of the image gave more response from passing through the convolution filters.
+
+b)
+By calculating backprop w.r.t. the input image, we receive per-pixel values indicating which parts of the image that change the parameter values of a given filter the most, meaning which pixels are most significant in changing the filter to minimize classification loss. We can then overlay this as a heatmap onto the input image to visualize which parts of the image the filter responded to.
+
+c)
+An adversarial image is a slightly perturbed image, where the perturbation is made in order to change a model's classification of the image, while still having the image look as similar as possible (to humans).
+
+d)
+The fast gradient sign method works by changing the perturbation delta in some directions depending only on a learning rate and the sign of the gradient on the network, typically in the direction of gradient ascent (as we in adversarial attacks want to increase the loss of the model so it gets closer to misclassification).
