@@ -1,0 +1,39 @@
+V19
+
+1a)
+h1 = Wh*h0 + Wx*x1 = 1*1 + 0.1*10 = 2
+h2 = Wh*h1 + Wx*x2 = 1*2 + 0.1*10 = 3
+
+ŷ1 = Wy*h1 = 2*2 = 4
+ŷ2 = Wy*h2 = 2*3 = 6
+
+1b)
+L1 = (ŷ1 - y1)^2 = (4 - 5)^2 = 1
+L2 = (ŷ2 - y2)^2 = (6 - 5)^2 = 1
+
+Total loss: L = L1 + L2 = 2
+
+2a)
+CNNs, because of parameter sharing. A filter that can be much smaller than the input image is slid across the image to produce a feature map. In a FFNN, each pixel in the input map would have a corresponding weight parameter, meaning the number of parameters would typically be much larger, thus less efficient.
+
+b)
+Assuming view invariance means invariance to what angle some image motive is viewed from in an image. If so, the CNN's ability to learn to classify objects regardless of the angle their pictures were taken from depends on the dataset; the dataset would have to contain many instances of the same objects from all angles to allow the CNN to learn to recognize that object from all angles. If this is achieved through the dataset, then the CNN should be able to learn view invariance. CNNs are inherently invariant to translation, meaning it is capable of classification regardless of affine transformations of the object it is to recognize and classify.
+
+c)
+Kernel size: the height and width dimensions of each filter kernel (in the channel dimension, each filter should have as many channels as the input images have channels.
+Number of filters: the number of filter kernels that are to be used to convolve with the input and produce as many feature maps as there are filters.
+Dilation rate: Number that decides if dilated convolution is performed or not, and to what rate.
+Downsampling filter hyperparameters (type of filter, size): If downsampling is performed after convolution within a layer, one has to decide the height and width dimensions of the filter, as well as what type of downsampling (max pooling, avg pooling etc.).
+
+d)
+    1) Results in feature maps of smaller size, making it computationally cheaper to perform convolutions and other operations on it afterwards.
+    2) Increases field of view of pixels in resulting feature map.
+    3) Reduces noise from the local information in the input feature map.
+
+e)
+    1) Non-differentiable operation, makes backpropagation tricky.
+    2) Max pooling is sensitive to local outlier values, as some values may be much larger than the surrounding ones (a median pooling filter, for instance, would not have the same problem).
+
+f)
+One way would be to design it like a U-Net; first convolutions and downsampling to reduce the feature map to a small size with a large receptive field, then upsample through e.g. deconvolution to take the feature map back to 
+
