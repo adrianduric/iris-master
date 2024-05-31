@@ -1,0 +1,65 @@
+1a)
+    1) The residual connections shorten the path back to the weights in earlier layers of the network. This helps against vanishing gradients.
+    2) Through GD, the weights will adjust automatically to emphasize the most important blocks in the network. This means if some blocks are redundant, they are bypassed in forward propagation.
+
+1b)
+class subnet(nn.Module):
+    ...
+
+    def forward(self,x):
+        
+        x = self.convblock17(x)
+        x_1 = self.convblock3(x)
+        x = self.strangeblock1(x_1)
+        x = self.convblock11(x)
+        x_2 = self.convblock9(x)
+        x = x_1 + x_2
+        x = self.strangeblock2(x)
+        x = self.convblock81(x)
+
+        return x
+
+2a)
+We can overshoot past the minimum the gradient is taking us towards. We can notice this if the gradient is changing its sign between every iteration, meaning we are jumping back and forth over the minimum.
+
+2b)
+Overfitting can be noticed graphically through plotting loss on a training set and a validation set. The parameters are updated based on the training set and we will typically see the training loss only dropping, as that is what GD leads to. However, if we plot the validation loss, we will notice at some point that it minimizes and then starts increasing again. This signifies that the model has started overfitting to the training data and learning its noise, instead of only modeling its underlying distribution. We typically want to stop training when validation loss is at its minimum.
+
+2c)
+Judging from the text, it sounds like in option 1, the test set has been looked at during training in order to select the best learning rate. Meanwhile, in option 2, the test set has been left alone and not looked at.
+
+When testing performance on the test set, it is likely that option 1 could get better results than option 2. However, this is because in option 1, the model has "seen" the test set which makes the model biased towards it and increases the risk of overfitting the model to the seen data. Option 2 could get worse results, but also more realistic results, as the test data would then still represent unseen data more accurately due to still being unseen.
+
+3a)
+    1) Data augmentation of already existing dataset to increase the size of the dataset and increase robustness through training the model to handle various transformations.
+    2) Batch normalisation can be done after each layer, which helps normalize the weights as they will be less sensitive to the magnitude of features.
+    3) Add weight decay to the loss function, which helps with regularizing the weights.
+
+4a)
+Fully connected layers have specific weights for every feature/neuron at every layer. Convolution layers do parameter sharing by having one set of weights per filter. The filters are applied across all the features.
+
+4b)
+Batch normalisation happens by calculating the mean and standard deviation of the batch, subtracting the mean from the batch features and dividing them by the standard deviation, then applying an affine transformation beta + gamma*x where beta and gamma are learnable parameters to customize the magnitude of features x as is most beneficial.
+
+I am not sure what adaptive instance normalization refers to specifically, but I will assume that it is done when new instances are introduced to the network iteratively, and the normalization "remembers" the values of previous instances in order to normalize new ones. One way to do this would be to keep track of a running mean and variance based on old instances, and use these to perform normalization on the new instance just like described above. This method is used for batch normalization during inference, in such a way that running mean and variance have been tracked and saved from the training set, and this is applied to the validation set.
+
+6a)
+The surrogate-based attack is not dependent on having access to the weights of the original network that one is trying to fool. It works for black-box attacks, which the others do not (they are white-box attacks).
+
+6b)
+The tanh function outputs a value between -1 and 1, and has a gradient value between 0 and 1 during backpropagation. It is not clear from the text where in the network the tanh layer is placed, but in general, the tanh layer gives a risk of vanishing gradients due to the value typically being <1. Therefore, one risk would be very inefficient updates to the input offset due to vanishing gradients.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
