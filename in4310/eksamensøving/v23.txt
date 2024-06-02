@@ -1,0 +1,97 @@
+V23
+
+1a)
+Presuming here that x: f(x) = const means all possible x that set the value of the sum of w_d*x_d to zero (equivalently, the inner product of w*x), leaving only the constant b in the term inside the sigmoid.
+    1) False: parallel w and x would give a nonzero inner product w*x (except the trivial case where one or both are zero).
+    2) True: in the non-trivial case (w is nonzero), the inner product w*x would have to be zero for the expression to be constant. this only happens when either x is a zero vector, or w and x are orthogonal.
+
+2a)
+In a fully connected layer, all output neurons are connected by a weight parameter to each input feature. In a 1-D convolution layer, a vector of weights slides across the input features to produce one output neuron in a feature map per placement of the filter during the convolution operation. With respect to the output, one can have as many output neurons in a fully connected layer as desired, while in the convolution case, the dimensions of the output depend on the convolution kernel size, stride and padding used.
+
+2c)
+Assuming the input image has dimensions CxHxW = 100xHxW (100 channels), and the layer produces an output feature map with dimensions NxH1xW1 = 30xH1xW1 (30 filters produce 1 feature map each, which are then stacked).
+
+Each filter then has 100x4x4 + 1 = 1601 parameters. There are 30 filters, making it 1601x30 = 48030 trainable parameters in the layer.
+
+3a)
+    1) True: we calculate a gradient for each parameter in the graph, and update the parameters by following the gradient with some hyperparameter eta to signify how far to follow that calculated gradient. This is a way to perform numerical differentiation.
+    2) True: If we consider the weights w as a d-dimensional vector for each of the d features in x, we want to find the derivative of the loss function with respect to each value in w, i.e. finding which way w should move in each dimension to minimize loss.
+    3) True: computing gradients as described in 1 and 2 is done through the chain rule.
+
+4a)
+It is typically computed as C(x) + x (2), though C(x) - x (4) would be equivalent, just changing signs during backpropagation. Residual connections can be considered as computing transformation + identity, where transformation is whatever operation is applied to the input of some layer within the layer (like convolution), and identity is the input itself, unchanged. (1) is wrong because it lacks identity. (3) is wrong because it concatenates the transformation and identity, not adding them together. (5) is wrong because multiplication wouldn't allow forward propagation to bypass the transformation layer by setting its weights to zero during backprop.
+
+5a)
+SGD by default has no normalization. SGD with momentum adds a velocity term acting as "memory" of older gradients, but this has no function of normalizing gradients.
+
+RMSProp does normalization through keeping track of the gradient per position in feature space, and adaptively updates parameters so that it goes slower where the gradient is steep, and quicker where it is flatter. AdamW is simply RMSProp with momentum, so it has the same normalization as RMSProp.
+
+5b)
+As described above, SGD with momentum does this, and thus AdamW also does it as it too has momentum. The others do not have momentum.
+
+6a)
+optimizer.zero_grad() is missing before loss.backward(); this would set the calculated gradients to zero, so the next calculated gradient is not influenced by previously calculated gradient values in the optimizer.
+
+7a)
+Given a development set, one would typically shuffle the set to ensure independent samples, then simply split off a percentage of the dataset that is to be used as the test set, and kept separate from training and validation sets. This can be e.g. 20% of the development set typically.
+
+A test set is typically sampled alongside the rest of the data in the development set (the training and validation sets). One can therefore presume that these stem from the same distribution of data. However, the model one trains and tests with the development set may in practice be applied to data from some other source than where the development test was sampled. For instance, images for the dev set were taken with one camera, but in practice, we will use the model for images from all kinds of cameras. This other, unseen data is considered an external dataset. To make the performance gap between test and external datasets as small as possible, one wants to make sure that the data are gathered from as similar distributions as possible.
+
+7b)
+By using the test set in essentially a similar way to how the validation set is used (optimizing the progression of training through tweaking parameters etc.), the model has effectively "seen" the test set now and becomes fitted to it. This means that in comparison to actually unseen data, the model will be somewhat overfitted to the test set, making the results non-representable for truly unseen data. One would have to sample an entirely new set of test data to get an accurate representation of performance on unseen data.
+
+8a)
+    Mixup: upper right (B).
+    Solarization: lower right (D).
+    Affine transformation: upper left (A).
+    Crop: lower left (C).
+
+8b) Mixup: other. It does not perform any geometric operation to the original input image, nor any photometric operation.
+Solarization: photometric. It alters the values in the color channels of the image.
+Affine transformation: geometric. It performs a transformation of the image to another vector space, which is a geometric operation.
+Crop: geometric. A specific transformation which is also geometric, as it alters geometric proportions between pixels in the original image.
+
+9a)
+Gradient clipping: the parameter being updated is only allowed to update with a maximum magnitude set by an epsilon tolerance (hyperparameter).
+Batch Normalization: by normalizing the feature values, the network doesn't learn to overemphasize certain features solely due to the magnitude of their values. Large differences in values across features may give exploding gradients, and normalization techniques (e.g. batch normalization) combats this.
+
+9b)
+1-to-N: one input, N outputs. Example: image description. An input image x is fed into the RNN, and the RNN sequentially produces N natural language token vectors to describe the image.
+
+M-to-N: M inputs, N outputs (M and N need not be equal). Example: natural language translation. An input sequence of M word vectors in one vocabulary (language) are given as input, and N word vectors in another vocabulary are sequentially generated as output.
+
+10a)
+White box attacks are attacks where one has access to the parameters of the networks one is trying to fool, i.e. they are visible. In black box attacks, they are not accessible/visible.
+
+Targeted attacks is where one tries to fool the network into classifying some input x into a specific class c, which is not the same as its actual class c*. Untargeted attacks are when it doesn't matter which class the network is fooled into classifying x into, as long as it is not the true class c*.
+
+10b)
+Projected gradient descent works by performing gradient descent iteratively w.r.t. the input, adding a perturbation delta to the input x and altering the delta so that the model goes closer and closer towards classifying x + delta as some specific class c. Alternatively, one may also just choose whichever class is given the lowest probability c_min, and performing GD towards minimizing its loss. In PGD, the gradient is also projected onto an epsilon ball to restrict the magnitude of the gradient, making sure the perturbation is not altered too abruptly per iteration but still being more computationally efficient than just lowering the learning rate.
+
+PGD is by default a white box attack, because it requires access to the network's parameters (unless one has a surrogate model to bypass the need for network parameters). It can be formulated as both a targeted or untargeted attack, using c as target class for targeted attacks and c_min (as described above) for untargeted ones.
+
+11a)
+It replicates the effect of using anchor boxes of different sizes. The different feature maps will have different scales and receptive fields. Proposing bounding boxes in these feature maps with different recceptive fields is equivalent to proposing them in one feature map with many anchor boxes of different sizes. As the task states, this of course helps detect objects that appear in various sizes in the same image (or different images).
+
+11b)
+First, one removes all proposed bounding boxes that represent the background (e.g. those with probability <0.5 of any non-background class). Then for every class, one finds all the Bboxes with the highest class probability on the feature map that do not overlap (a measure of overlap can for instance be overlap if IoU > 0.5, non-overlap otherwise). Then, any Bbox that overlaps with any of these is removed. Now, each Bbox should correspond to its own, discernible object in the image.
+
+12b)
+In sematic segmentation, each pixel is classified as belonging to one of C classes. In instance segmentation, a mask is produced for each detected object of any class, and overlaid on top of that object (there is no distinction between objects of the same or different classes, they are masked separately).
+
+13a)
+The output context vectors from the encoder are used to produce key and value vectors to be used in the multi-head attention in the decoder block, where the output of the decoder's own self-attention is used as query vectors. This makes it so that each of the current and earlier words in the decoder input sequence are matched and evaluated context-wise against the context vectors of the encoder's input sequence.
+
+b)
+We would get extremely long input and output sequences. The ViT overcomes this by splitting the image into patches, and using Transformers on each patch instead, resulting in a series of flattened context vectors corresponding to each patch.
+
+
+
+
+
+
+
+
+
+
+
