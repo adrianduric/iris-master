@@ -49,7 +49,24 @@ The surrogate-based attack is not dependent on having access to the weights of t
 6b)
 The tanh function outputs a value between -1 and 1, and has a gradient value between 0 and 1 during backpropagation. It is not clear from the text where in the network the tanh layer is placed, but in general, the tanh layer gives a risk of vanishing gradients due to the value typically being <1. Therefore, one risk would be very inefficient updates to the input offset due to vanishing gradients.
 
+8b)
+We would have an RNN, because neuron would connect back to itself and thus contribute to its own weight update in backpropagation. Unrolling this sequence through timesteps and performing backprop is equivalent to backpropagation through time (BPTT).
 
+10a)
+This array could then be [c0, c1, c2, c3, bx, by, bh, bw] where each ci is the class probability of class i (c0 is the background class, the rest are birds, balloons and baboons). bx and by would specify a coordinate to place a bounding box for a given object; (x, y) could for instance specify the top left corner of a bounding box. Then, bh and bw would specify the height and width offset of the bounding box, for instance the length (amount of pixels) down and to the right as seen from the top-left corner. This information is enough to specify a bounding box, and to which class a given bounding box is classified.
+
+An appropriate loss function would be a combined loss, L = L1 + L2 where L1 is classification loss (for instance cross-entropy) over the four class probabilities, and L2 is regression loss over the coordinates and offset that specify the bounding box (for instance MSE).
+
+10b)
+One may use NMS (Non-Max suppression). First, all background Bboxes are removed (f.ex. where ci for any non-background class is <0.5). Then, for each class, we find all the non-overlapping Bboxes with the highest ci's (overlap could f.ex. be when IOU > 0.5). Then, we remove all Bboxes that overlap with any of these most likely Bboxes.
+
+11a)
+Only the parameters of the 3 last blocks (4, 5 and 6) are trained, meaning the first 3 blocks will only stay as they were initialized and will not contain any learned information from the data it is trained on. Then, these three layers are redundant and may even harm the network performance as they will esentially only output some transformation of the input images, not the true input itself.
+
+11b)
+One way would be to simply make all the CNN blocks trainable, meaning the first 3 layers would also contribute to classification. Then, all the network parameters would be trained to learn patterns from the training data, meaning one would have a deeper network that should be capable of learning more complex patterns in the data.
+
+Another way (which could and should be combined with the first way) is to add residual connections between blocks. In particular, a residual connection would have to be added between the input and block 4, meaning blocks 1-3 could be skipped if the network deems them redundant through backpropagation (the network would then set weights from the first 3 blocks closer to 0, and give heigher values to the weights from input to block 4). This would improve performance as the input to block 4 would now be some likely more meaningful feature map representative of the data. Also, residual connections generally improve performance of CNNs by combating the problem of vanishing gradients, and lets the network "remember" more localized information from earlier layer feature maps.
 
 
 

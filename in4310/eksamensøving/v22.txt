@@ -1,0 +1,87 @@
+V22
+
+1b)
+I would add another sigmoid activation to the ŷ estimate: p_hat = g(ŷ) which would map the output of the network to the [0, 1]-domain, meaning we could interpret it as a proportion. Then, of course, the true value y would also have to be changed to a true proportion p.
+
+3a)
+It is a 2x2 max pooling filter with padding 0 and stride 2 in both dimensions (height and width).
+
+3c)
+I interpret the text so that a single image with dimensions CxHxW = 200xHxW (200 input channels) is passed through the layer, and that the resulting feature map has dimensions NxH1xW1 = 100xH1xW1 (100 feature maps stacked as channels, H1 and W1 are altered from H and W).
+
+Each filter has 5x9 parameters for 1 channel; in total, 200x5x9 = 9000 parameters per filter. Each filter produces one H1xW1 feature map. Then, there are N=100 filters, meaning 100x9000 = 900000 learnable parameters in the filters alone. Additionally, there are N=100 trainable bias weights, one per filter or output feature map, making for a total of 900100 trainable parameters in the layer.
+
+4a)
+class Model(nn.Module):
+    def __init__(self):
+        super(Model, self).__init__()
+        self.conv1 = nn.Conv2d(in_channels=1, out_channels=16, kernel_size=3)
+        self.conv2 = nn.Conv2d(in_channels=16, out_channels=16, kernel_size=3)
+        self.maxpool1 = nn.MaxPool2d(kernel_size=2)
+        self.conv3 = nn.Conv2d(in_channels=16, out_channels=32, kernel_size=3)
+        self.conv4 = nn.Conv2d(in_channels=32, out_channels=32, kernel_size=3)
+        self.maxpool2 = nn.MaxPool2d(kernel_size=2)
+        self.fc1 = nn.Linear(in_features=32*4*4, out_features=10)
+
+    def batchnorm(x):
+        mu = torch.mean(x, dim=0)
+        sigma = torch.sd(x, dim=0)
+        x_norm = (x - mu)/sigma
+        
+        return x_norm
+
+    def forward(self, x):
+        x = batchnorm(x)
+        out = F.relu(self.conv1(x))
+        out = F.relu(self.conv2(out))
+        out = self.maxpool1(out)
+        out = batchnorm(out)
+        out = F.relu(self.conv3(out))
+        out = F.relu(self.conv4(out))
+        out = self.maxpool2(out)
+        out = batchnorm(out)
+        out = out.view(out.size(0), -1)
+        out = self.fc1(out)
+        return out
+
+My code presumes that x has dimensions NxCxHxW where N is the number of samples in the batch (therefore dim=0, to calculate mu and sigma over the batch). Also, batchnorm can be applied multiple places in the code, I applied it on some places that seemed natural (after what looked like convolution "blocks").
+
+4b)
+In training, one should keep track of the running mean and standard deviation of feature maps where batch normalization is performed. This should be added so that in inference, the normalization is performed using these values, meaning one presumes that the test set stems from a distribution with the same mean and standard deviation as the training set (which typically is much larger). This is needed to accurately normalize the test set to a size that the weights have been trained on; if one uses the mean and standard deviation of the test set alone, there is a risk of the values being different in magnitude, which may result in instability in the predictions.
+
+4c)
+Residual connections, which add feature maps from earlier layers to feature maps in later stages of the network; this also helps stabilize gradient flow, in particular avoiding vanishing gradients for earlier layers.
+
+Weight decay, which penalizes weights of large magnitude. This typically results in larger gradients than if the weights had been larger, and thus helps gradient flow.
+
+5a)
+One may increase computational efficiency during gradient descent (it goes quicker). It also helps skip saddle points, flat regions and local minima.
+
+5b)
+I would simply adjust the weight, making it smaller so momentum matters less and the current gradient matters more. Because the momentum formula works recursively, the smaller parameter value would have a stacking effect across timesteps, making older gradients less and less emphasized the further back they are.
+
+7a)
+The second one is suitable because we want to keep x and x* as close as possible, while making the predictions from f(x) and f(x*) be as distant as possible, which is what we want to do in adversarial attacks. Mathematically, that results in the expression in 2) going towards infinity. The first one is unsuitable because it optimizes for something different; it wants to as different x and x* as possible to be classified as similarly as possible, which is not the case in adversarial attacks. The third one again expresses something that has nothing to do with adversarial attacks, and doesn't even express a measure of distance between classifications of x and x*.
+
+7b)
+It updates the parameters of the network, when it should instead add a perturbation to the image and update it iteratively. Therefore, to fix it, one would have to differentiate w.r.t. the input image and update the image, not the parameters.
+
+8a)
+Perhaps a 4:1 ratio would be appropriate to fit humans in them, presuming that humans' height to width ratio typically is about 4:1.
+
+8b)
+One way would be to use SSDs, so that feature maps with different-sized receptive fields (smaller feature maps would have larger receptive fields) but with same-sized anchor boxes would create ROIs or bounding boxes for the various appearance sizes of humans (the larger receptive field feature maps would cover the larger appearances, and the larger feature maps with smaller receptive fields would cover small-appearing humans).
+
+8c)
+Each proposed Bbox would now correspond to one object, i.e. one human. Then, for each proposed Bbox, one could take that part of the feature map within the bounding box and perform image segmentation on it. Then, each pixel within each bounding box could be labelled e.g. "human" or "background", meaning each human-labelled pixel would be part of the mask. The masks from all the Bboxes could then be overlaid onto the input image to display masks per object in the image, i.e. per human.
+
+
+
+
+
+
+
+
+
+
+
